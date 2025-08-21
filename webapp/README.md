@@ -100,7 +100,7 @@ Generate downloadable reports
 webapp/
 ├── package.json          # Dependencies and scripts
 ├── server.js            # Express server with API routes
-└── public/
+└── static/
     ├── index.html       # Main SPA template
     └── app.js          # Vue.js application logic
 ```
@@ -114,7 +114,7 @@ BREWFATHER_API_KEY=your_api_key
 
 ### Adding Features
 1. **New API Endpoint**: Add route in `server.js`
-2. **UI Changes**: Update `public/index.html` and `public/app.js`
+2. **UI Changes**: Update `static/index.html` and `static/app.js`
 3. **New Dependencies**: Update `webapp/package.json`
 
 ## Security Considerations

@@ -18,7 +18,7 @@ const port = process.env.PORT || 3000;
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'static')));
 
 // Configure multer for file uploads
 const upload = multer({
@@ -230,7 +230,7 @@ app.post('/api/generate-reports', async (req, res) => {
 
 // Serve the SPA
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, 'static', 'index.html'));
 });
 
 // Helper functions
@@ -280,5 +280,5 @@ if (!fs.existsSync('uploads')) {
 
 app.listen(port, () => {
   console.log(`🍺 Malt Miller Webapp running on http://localhost:${port}`);
-  console.log(`📁 Static files served from: ${path.join(__dirname, 'public')}`);
+  console.log(`📁 Static files served from: ${path.join(__dirname, 'static')}`);
 });
