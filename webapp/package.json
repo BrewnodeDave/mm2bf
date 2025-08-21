@@ -2,11 +2,11 @@
   "name": "malt-miller-webapp",
   "version": "1.0.0",
   "description": "Web interface for Malt Miller to Brewfather inventory sync",
-  "main": "server.js",
+  "main": "index.js",
   "type": "module",
   "scripts": {
-    "dev": "node server.js",
-    "start": "NODE_ENV=production node server.js",
+    "dev": "node index.js",
+    "start": "NODE_ENV=production node index.js",
     "build": "echo 'No build step needed for vanilla JS'"
   },
   "dependencies": {
@@ -20,6 +20,6 @@
     "brewing",
     "inventory"
   ],
-  "author": "",
+  "author": "Brewnode Dave",
   "license": "MIT"
 }
