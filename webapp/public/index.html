@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Malt Miller to Brewfather Sync</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .fade-enter-active, .fade-leave-active {
+            transition: opacity 0.3s ease;
+        }
+        .fade-enter-from, .fade-leave-to {
+            opacity: 0;
+        }
+        .slide-enter-active, .slide-leave-active {
+            transition: all 0.3s ease;
+        }
+        .slide-enter-from {
+            transform: translateY(-10px);
+            opacity: 0;
+        }
+        .slide-leave-to {
+            transform: translateY(10px);
+            opacity: 0;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div id="app" class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">
+                <i class="fas fa-beer text-amber-600"></i>
+                Malt Miller to Brewfather Sync
+            </h1>
+            <p class="text-gray-600">Extract ingredients from Malt Miller invoices and sync with your Brewfather inventory</p>
+        </div>
+
+        <!-- Progress Steps -->
+        <div class="mb-8">
+            <div class="flex items-center justify-center space-x-4">
+                <div class="flex items-center">
+                    <div :class="['w-8 h-8 rounded-full flex items-center justify-center text-white font-bold', 
+                                 currentStep >= 1 ? 'bg-green-500' : 'bg-gray-300']">
+                        <i class="fas fa-upload"></i>
+                    </div>
+                    <span class="ml-2 text-sm font-medium text-gray-700">Upload PDF</span>
+                </div>
+                <div class="w-16 h-1 bg-gray-300 rounded"></div>
+                <div class="flex items-center">
+                    <div :class="['w-8 h-8 rounded-full flex items-center justify-center text-white font-bold', 
+                                 currentStep >= 2 ? 'bg-green-500' : 'bg-gray-300']">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <span class="ml-2 text-sm font-medium text-gray-700">Parse Invoice</span>
+                </div>
+                <div class="w-16 h-1 bg-gray-300 rounded"></div>
+                <div class="flex items-center">
+                    <div :class="['w-8 h-8 rounded-full flex items-center justify-center text-white font-bold', 
+                                 currentStep >= 3 ? 'bg-green-500' : 'bg-gray-300']">
+                        <i class="fas fa-link"></i>
+                    </div>
+                    <span class="ml-2 text-sm font-medium text-gray-700">Match & Sync</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Alert -->
+        <transition name="fade">
+            <div v-if="error" class="mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+                <strong class="font-bold">Error!</strong>
+                <span class="block sm:inline"> {{ error }}</span>
+                <span @click="error = null" class="absolute top-0 bottom-0 right-0 px-4 py-3 cursor-pointer">
+                    <i class="fas fa-times"></i>
+                </span>
+            </div>
+        </transition>
+
+        <!-- Success Alert -->
+        <transition name="fade">
+            <div v-if="success" class="mb-6 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative">
+                <strong class="font-bold">Success!</strong>
+                <span class="block sm:inline"> {{ success }}</span>
+                <span @click="success = null" class="absolute top-0 bottom-0 right-0 px-4 py-3 cursor-pointer">
+                    <i class="fas fa-times"></i>
+                </span>
+            </div>
+        </transition>
+
+        <!-- Step 1: Upload PDF -->
+        <div v-show="currentStep === 1" class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-file-pdf text-red-500"></i>
+                Upload Malt Miller Invoice
+            </h2>
+            
+            <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                <div v-if="!uploading">
+                    <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
+                    <p class="text-gray-600 mb-4">Drag and drop your Malt Miller PDF invoice here, or click to browse</p>
+                    <input 
+                        type="file" 
+                        ref="fileInput" 
+                        @change="handleFileSelect" 
+                        accept=".pdf" 
+                        class="hidden"
+                    >
+                    <button 
+                        @click="$refs.fileInput.click()" 
+                        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                    >
+                        Choose PDF File
+                    </button>
+                </div>
+                <div v-else class="text-center">
+                    <i class="fas fa-spinner fa-spin text-4xl text-blue-500 mb-4"></i>
+                    <p class="text-gray-600">Processing invoice...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: Invoice Results -->
+        <div v-show="currentStep === 2 && invoiceData?.invoice" class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-receipt text-green-500"></i>
+                Invoice Analysis
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div class="bg-blue-50 p-4 rounded-lg">
+                    <div class="flex items-center">
+                        <i class="fas fa-hashtag text-blue-500 text-xl mr-3"></i>
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Invoice Number</p>
+                            <p class="text-lg font-bold text-gray-800">{{ invoiceData?.invoice?.invoiceNumber || 'N/A' }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-green-50 p-4 rounded-lg">
+                    <div class="flex items-center">
+                        <i class="fas fa-list text-green-500 text-xl mr-3"></i>
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Total Items</p>
+                            <p class="text-lg font-bold text-gray-800">{{ invoiceData?.summary?.totalItems || 0 }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-yellow-50 p-4 rounded-lg">
+                    <div class="flex items-center">
+                        <i class="fas fa-pound-sign text-yellow-500 text-xl mr-3"></i>
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Total Cost</p>
+                            <p class="text-lg font-bold text-gray-800">£{{ invoiceData?.summary?.totalCost?.toFixed(2) || '0.00' }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-purple-50 p-4 rounded-lg">
+                    <div class="flex items-center">
+                        <i class="fas fa-tags text-purple-500 text-xl mr-3"></i>
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Categories</p>
+                            <p class="text-lg font-bold text-gray-800">{{ Object.keys(invoiceData?.summary?.byType || {}).length }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-3">Ingredients by Category</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div v-for="(data, type) in invoiceData?.summary?.byType || {}" :key="type" class="bg-gray-50 p-3 rounded">
+                        <h4 class="font-medium text-gray-700 capitalize">{{ type }}s</h4>
+                        <p class="text-sm text-gray-600">{{ data.count }} items</p>
+                        <p class="text-sm text-gray-600">£{{ data.totalCost.toFixed(2) }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex space-x-4">
+                <button 
+                    @click="generateReports" 
+                    class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+                    :disabled="generatingReports"
+                >
+                    <i class="fas fa-download mr-2"></i>
+                    {{ generatingReports ? 'Generating...' : 'Download Reports' }}
+                </button>
+                <button 
+                    @click="currentStep = 3" 
+                    class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                >
+                    <i class="fas fa-arrow-right mr-2"></i>
+                    Continue to Brewfather Sync
+                </button>
+                <button 
+                    @click="resetApp" 
+                    class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
+                >
+                    <i class="fas fa-redo mr-2"></i>
+                    Start Over
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 3: Brewfather Integration -->
+        <div v-show="currentStep === 3" class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-link text-blue-500"></i>
+                Brewfather Integration
+            </h2>
+
+            <!-- Credentials -->
+            <div v-if="!credentialsVerified" class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-3">Brewfather API Credentials</h3>
+                
+                <!-- Stored credentials indicator -->
+                <div v-if="hasStoredCredentials" class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <i class="fas fa-save text-blue-500 mr-2"></i>
+                            <span class="text-sm text-blue-700">Credentials loaded from storage</span>
+                        </div>
+                        <button 
+                            @click="clearStoredCredentials" 
+                            class="text-sm text-blue-600 hover:text-blue-800 underline"
+                        >
+                            Clear stored credentials
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">User ID</label>
+                        <input 
+                            v-model="brewfatherCredentials.userId" 
+                            type="text" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Enter your Brewfather User ID"
+                        >
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">API Key</label>
+                        <input 
+                            v-model="brewfatherCredentials.apiKey" 
+                            type="password" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Enter your Brewfather API Key"
+                        >
+                    </div>
+                </div>
+                
+                <div class="flex items-center justify-between">
+                    <button 
+                        @click="testConnection" 
+                        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                        :disabled="testingConnection || !brewfatherCredentials.userId || !brewfatherCredentials.apiKey"
+                    >
+                        <i :class="['mr-2', testingConnection ? 'fas fa-spinner fa-spin' : 'fas fa-plug']"></i>
+                        {{ testingConnection ? 'Testing...' : 'Test Connection' }}
+                    </button>
+                    
+                    <div class="text-sm text-gray-500">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Credentials saved locally in your browser
+                    </div>
+                </div>
+                
+                <div class="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-700">
+                    <i class="fas fa-shield-alt mr-1"></i>
+                    <strong>Security:</strong> Credentials are stored locally in your browser only and never sent to external servers except Brewfather API.
+                </div>
+            </div>
+
+            <!-- Analysis Results -->
+            <div v-if="credentialsVerified && !analysisComplete" class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-3">Ingredient Matching Analysis</h3>
+                <p class="text-gray-600 mb-4">Analyzing which ingredients match your existing Brewfather inventory...</p>
+                <button 
+                    @click="analyzeMatches" 
+                    class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded"
+                    :disabled="analyzing"
+                >
+                    <i :class="['mr-2', analyzing ? 'fas fa-spinner fa-spin' : 'fas fa-search']"></i>
+                    {{ analyzing ? 'Analyzing...' : 'Analyze Matches' }}
+                </button>
+            </div>
+
+            <!-- Match Results -->
+            <div v-if="matchResults" class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-3">Matching Results</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div class="bg-green-50 p-4 rounded-lg">
+                        <h4 class="font-medium text-green-700">Exact Matches</h4>
+                        <p class="text-2xl font-bold text-green-800">{{ matchSummary.exactMatches }}</p>
+                        <p class="text-sm text-green-600">Ready to sync</p>
+                    </div>
+                    <div class="bg-yellow-50 p-4 rounded-lg">
+                        <h4 class="font-medium text-yellow-700">Partial Matches</h4>
+                        <p class="text-2xl font-bold text-yellow-800">{{ matchSummary.partialMatches }}</p>
+                        <p class="text-sm text-yellow-600">Verify before sync</p>
+                    </div>
+                    <div class="bg-red-50 p-4 rounded-lg">
+                        <h4 class="font-medium text-red-700">No Matches</h4>
+                        <p class="text-2xl font-bold text-red-800">{{ matchSummary.noMatches }}</p>
+                        <p class="text-sm text-red-600">Add manually first</p>
+                    </div>
+                </div>
+
+                <!-- Detailed Match Results -->
+                <div class="space-y-2 mb-4 max-h-96 overflow-y-auto">
+                    <div v-for="(ingredient, index) in ingredientsWithMatches" :key="index" class="border rounded p-3">
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1">
+                                <h4 class="font-medium text-gray-800">{{ ingredient.name }}</h4>
+                                <p class="text-sm text-gray-600">{{ ingredient.type }} • {{ ingredient.amount }} {{ ingredient.unit }} • £{{ ingredient.cost?.toFixed(4) || '0.00' }}/{{ ingredient.unit }}</p>
+                            </div>
+                            <div class="ml-4">
+                                <span v-if="ingredient.matchStatus === 'exact'" class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded">
+                                    <i class="fas fa-check mr-1"></i>Exact Match
+                                </span>
+                                <span v-else-if="ingredient.matchStatus === 'partial'" class="bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded">
+                                    <i class="fas fa-exclamation-triangle mr-1"></i>Partial Match
+                                </span>
+                                <span v-else class="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded">
+                                    <i class="fas fa-times mr-1"></i>No Match
+                                </span>
+                            </div>
+                        </div>
+                        <div v-if="ingredient.brewfatherMatch" class="mt-2 p-2 bg-gray-50 rounded text-sm">
+                            <strong>Brewfather:</strong> {{ ingredient.brewfatherMatch.name }}
+                            <span v-if="ingredient.brewfatherMatch.inventory">
+                                (Current: {{ ingredient.brewfatherMatch.inventory.amount || 0 }} {{ ingredient.brewfatherMatch.inventory.unit || 'units' }})
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex space-x-4">
+                    <button 
+                        @click="syncWithBrewfather" 
+                        class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+                        :disabled="syncing || matchSummary.exactMatches + matchSummary.partialMatches === 0"
+                    >
+                        <i :class="['mr-2', syncing ? 'fas fa-spinner fa-spin' : 'fas fa-sync']"></i>
+                        {{ syncing ? 'Syncing...' : `Sync ${matchSummary.exactMatches + matchSummary.partialMatches} Items` }}
+                    </button>
+                    <button 
+                        @click="generateReports" 
+                        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                    >
+                        <i class="fas fa-download mr-2"></i>
+                        Download Reports
+                    </button>
+                </div>
+            </div>
+
+            <!-- Sync Results -->
+            <div v-if="syncResults" class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-3">Brewfather Sync Results</h3>
+                <div class="space-y-4">
+                    <!-- Summary -->
+                    <div class="bg-blue-50 p-4 rounded-lg">
+                        <h4 class="font-medium text-blue-800 mb-2">Summary</h4>
+                        <div class="grid grid-cols-3 gap-4 text-sm">
+                            <div class="text-center">
+                                <div class="text-green-600 font-semibold">{{ getSyncSummary().success }}</div>
+                                <div class="text-gray-600">Updated</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-yellow-600 font-semibold">{{ getSyncSummary().notFound }}</div>
+                                <div class="text-gray-600">Not Found</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-red-600 font-semibold">{{ getSyncSummary().errors }}</div>
+                                <div class="text-gray-600">Errors</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Detailed Results -->
+                    <div v-for="(results, type) in enhancedSyncResults?.results || syncResults?.results" :key="type" class="bg-gray-50 p-4 rounded-lg">
+                        <h4 class="font-medium text-gray-700 capitalize mb-3 flex items-center">
+                            <i :class="getTypeIcon(type)" class="mr-2"></i>
+                            {{ type }}s ({{ Array.isArray(results) ? results.length : 0 }})
+                        </h4>
+                        
+                        <div v-if="Array.isArray(results)" class="space-y-2">
+                            <!-- Successful updates with enhanced display -->
+                            <div v-for="result in results.filter(r => r.success)" :key="'success-' + result.name" 
+                                 class="flex items-center justify-between p-2 bg-green-50 rounded border-l-4 border-green-400">
+                                <span class="text-gray-700">{{ result.name }}</span>
+                                <div class="flex items-center text-green-600 text-sm">
+                                    <i class="fas fa-check mr-1"></i>
+                                    <span v-if="result.newAmount !== undefined && result.currentAmount !== undefined">
+                                        {{ result.currentAmount }} → {{ result.newAmount }} {{ result.unit || '' }}
+                                        <span class="text-green-700 ml-1">(+{{ result.adjustedBy || 0 }})</span>
+                                    </span>
+                                    <span v-else-if="result.adjustedBy !== undefined">
+                                        +{{ result.adjustedBy }} {{ result.unit || '' }} added
+                                    </span>
+                                    <span v-else>
+                                        Updated
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <!-- Items not found (unchanged) -->
+                            <div v-for="result in results.filter(r => !r.success && r.action === 'not_found')" 
+                                 :key="'notfound-' + result.name" 
+                                 class="flex items-center justify-between p-2 bg-yellow-50 rounded border-l-4 border-yellow-400">
+                                <span class="text-gray-700">{{ result.name }}</span>
+                                <div class="flex items-center text-yellow-600 text-sm">
+                                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                                    Not in Brewfather
+                                </div>
+                            </div>
+                            
+                            <!-- Errors (unchanged) -->
+                            <div v-for="result in results.filter(r => !r.success && r.action !== 'not_found')" 
+                                 :key="'error-' + result.name" 
+                                 class="flex items-center justify-between p-2 bg-red-50 rounded border-l-4 border-red-400">
+                                <span class="text-gray-700">{{ result.name }}</span>
+                                <div class="flex items-center text-red-600 text-sm">
+                                    <i class="fas fa-times mr-1"></i>
+                                    {{ result.error || 'Error' }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Tips for not found items -->
+                    <div v-if="getSyncSummary().notFound > 0" class="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                        <h4 class="font-medium text-yellow-800 mb-2 flex items-center">
+                            <i class="fas fa-lightbulb mr-2"></i>
+                            Next Steps
+                        </h4>
+                        <p class="text-yellow-700 text-sm">
+                            Items marked as "Not in Brewfather" need to be added to your Brewfather inventory first. 
+                            You can add them manually through the Brewfather web app, then run the sync again to update quantities.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Download Reports Modal -->
+        <div v-if="showReportsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center">
+            <div class="bg-white p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Download Reports</h3>
+                <div class="space-y-3">
+                    <button 
+                        v-for="(report, key) in reports" 
+                        :key="key"
+                        @click="downloadReport(report, key)"
+                        class="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-left"
+                    >
+                        <i class="fas fa-download mr-2"></i>
+                        {{ report.filename }}
+                    </button>
+                </div>
+                <button 
+                    @click="showReportsModal = false" 
+                    class="mt-4 w-full bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
+                >
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

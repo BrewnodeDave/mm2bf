@@ -1,0 +1,352 @@
+{
+  "invoice": {
+    "number": "18761",
+    "date": "7th April 2025 Order",
+    "total": null
+  },
+  "ingredients": [
+    {
+      "type": "fermentable",
+      "name": "Product Quantity Weight Price Line Total Brewers Clarity 0.5g x 5 - Reduces Gluten and Chill Haze",
+      "subType": "Crystal",
+      "color": 60,
+      "amount": 0,
+      "unit": "kg",
+      "cost": 0,
+      "supplier": "Malt Miller",
+      "origin": "Unknown",
+      "notes": "Imported from invoice. Original: Product Quantity Weight Price Line Total Brewers Clarity 0.5g x 5 - Reduces Gluten and Chill Haze"
+    },
+    {
+      "type": "hop",
+      "name": "Chinook Whole Hops 100g-CF",
+      "subType": "Leaf",
+      "form": "Leaf",
+      "alpha": 5,
+      "amount": 899.9999999999999,
+      "unit": "g",
+      "cost": 0.0265,
+      "supplier": "Malt Miller",
+      "origin": "Unknown",
+      "notes": "Imported from invoice. Original: Chinook Whole Hops 100g-CF"
+    },
+    {
+      "type": "hop",
+      "name": "Citra® - BarthHaas® Pure Hop Pellets - 100g",
+      "subType": "Pellet",
+      "form": "Pellet",
+      "alpha": 5,
+      "amount": 400,
+      "unit": "g",
+      "cost": 0.0458,
+      "supplier": "Malt Miller",
+      "origin": "Unknown",
+      "notes": "Imported from invoice. Original: Citra® - BarthHaas® Pure Hop Pellets - 100g"
+    },
+    {
+      "type": "misc",
+      "name": "Duotight 8mm (5/16) x Ball Lock Disconnect - (Grey + Red Gas) 4 Pack",
+      "subType": "Other",
+      "use": "Boil",
+      "amount": 200,
+      "unit": "g",
+      "cost": 0.115,
+      "supplier": "Malt Miller",
+      "notes": "Imported from invoice. Original: Duotight 8mm (5/16) x Ball Lock Disconnect - (Grey + Red Gas) 4 Pack"
+    },
+    {
+      "type": "fermentable",
+      "name": "Simpsons Malt - Finest Pale Ale Golden Promise 25kg Sack Crushed?: Uncrushed Split?: 5x5kg",
+      "subType": "Crystal",
+      "color": 25,
+      "amount": 27,
+      "unit": "kg",
+      "cost": 1.7337,
+      "supplier": "Malt Miller",
+      "origin": "Unknown",
+      "notes": "Imported from invoice. Original: Simpsons Malt - Finest Pale Ale Golden Promise 25kg Sack Crushed?:   Uncrushed Split?:   5x5kg"
+    },
+    {
+      "type": "yeast",
+      "name": "WLP001 California Ale Yeast - PurePitch® Next Generation BB: 12/05/2025",
+      "subType": "Ale",
+      "form": "Dry",
+      "laboratory": "Unknown",
+      "productId": "WLP001",
+      "amount": 0.8,
+      "unit": "pkg",
+      "cost": 17.4375,
+      "supplier": "Malt Miller",
+      "notes": "Imported from invoice. Original: WLP001 California Ale Yeast - PurePitch® Next Generation BB: 12/05/2025"
+    },
+    {
+      "type": "fermentable",
+      "name": "Simpsons Malt - Golden Naked Oats® Crushed?: Uncrushed",
+      "subType": "Base",
+      "color": 2,
+      "amount": 4000,
+      "unit": "kg",
+      "cost": 0.0016,
+      "supplier": "Malt Miller",
+      "origin": "Unknown",
+      "notes": "Imported from invoice. Original: Simpsons Malt - Golden Naked Oats® Crushed?:   Uncrushed"
+    },
+    {
+      "type": "misc",
+      "name": "Brewing Sugar (Dextrose) 2kg",
+      "subType": "Other",
+      "use": "Boil",
+      "amount": 2000,
+      "unit": "g",
+      "cost": 0.0023,
+      "supplier": "Malt Miller",
+      "notes": "Imported from invoice. Original: Brewing Sugar (Dextrose) 2kg"
+    },
+    {
+      "type": "fermentable",
+      "name": "Page 1 of 2 The Malt Miller Ltd is a company registered in England and Wales. Registration No. NUMBER | EORI No. GB121123089000 | AWRS XQAW00000114959 | IOSS IM2500004423 Product Quantity Weight Price Line Total Crisp Maltings - Flaked Torrefied Barley Crushed?: Uncrushed",
+      "subType": "Crystal",
+      "color": 1,
+      "amount": 4000,
+      "unit": "kg",
+      "cost": 0.0011,
+      "supplier": "Malt Miller",
+      "origin": "Unknown",
+      "notes": "Imported from invoice. Original: Page  1  of  2 The Malt Miller Ltd is a company registered in England and Wales. Registration No. NUMBER | EORI No. GB121123089000 | AWRS XQAW00000114959 | IOSS IM2500004423 \nProduct Quantity Weight Price Line Total Crisp Maltings - Flaked Torrefied Barley Crushed?:   Uncrushed"
+    },
+    {
+      "type": "hop",
+      "name": "Azacca Whole Hops 100g-CF",
+      "subType": "Leaf",
+      "form": "Leaf",
+      "alpha": 5,
+      "amount": 400,
+      "unit": "g",
+      "cost": 0.0248,
+      "supplier": "Malt Miller",
+      "origin": "Unknown",
+      "notes": "Imported from invoice. Original: Azacca Whole Hops 100g-CF"
+    },
+    {
+      "type": "hop",
+      "name": "Galaxy® - BarthHaas® Pure Hop Pellets - 100g",
+      "subType": "Pellet",
+      "form": "Pellet",
+      "alpha": 5,
+      "amount": 400,
+      "unit": "g",
+      "cost": 0.0413,
+      "supplier": "Malt Miller",
+      "origin": "Unknown",
+      "notes": "Imported from invoice. Original: Galaxy® - BarthHaas® Pure Hop Pellets - 100g"
+    },
+    {
+      "type": "hop",
+      "name": "Mosaic Whole Hops 100g-CF",
+      "subType": "Leaf",
+      "form": "Leaf",
+      "alpha": 5,
+      "amount": 100,
+      "unit": "g",
+      "cost": 0.0979,
+      "supplier": "Malt Miller",
+      "origin": "Unknown",
+      "notes": "Imported from invoice. Original: Mosaic Whole Hops 100g-CF"
+    },
+    {
+      "type": "hop",
+      "name": "Simcoe - T90 Pellets 100g-SP",
+      "subType": "Pellet",
+      "form": "Pellet",
+      "alpha": 5,
+      "amount": 899.9999999999999,
+      "unit": "g",
+      "cost": 0.0298,
+      "supplier": "Malt Miller",
+      "origin": "Unknown",
+      "notes": "Imported from invoice. Original: Simcoe - T90 Pellets 100g-SP"
+    },
+    {
+      "type": "hop",
+      "name": "Cascade Whole Hops 100g-CF",
+      "subType": "Leaf",
+      "form": "Leaf",
+      "alpha": 5,
+      "amount": 100,
+      "unit": "g",
+      "cost": 0.0775,
+      "supplier": "Malt Miller",
+      "origin": "Unknown",
+      "notes": "Imported from invoice. Original: Cascade Whole Hops 100g-CF"
+    },
+    {
+      "type": "hop",
+      "name": "Amarillo Whole Hops 100g-CF",
+      "subType": "Leaf",
+      "form": "Leaf",
+      "alpha": 5,
+      "amount": 400,
+      "unit": "g",
+      "cost": 0.0428,
+      "supplier": "Malt Miller",
+      "origin": "Unknown",
+      "notes": "Imported from invoice. Original: Amarillo Whole Hops 100g-CF"
+    },
+    {
+      "type": "hop",
+      "name": "Goldings (East Kent) Whole Hops 100G-CF",
+      "subType": "Leaf",
+      "form": "Leaf",
+      "alpha": 5,
+      "amount": 100,
+      "unit": "g",
+      "cost": 0.0615,
+      "supplier": "Malt Miller",
+      "origin": "Unknown",
+      "notes": "Imported from invoice. Original: Goldings (East Kent) Whole Hops 100G-CF"
+    }
+  ],
+  "summary": {
+    "totalItems": 16,
+    "totalCost": 235.3999,
+    "byType": {
+      "fermentable": {
+        "count": 4,
+        "totalCost": 57.609899999999996,
+        "items": [
+          {
+            "name": "Product Quantity Weight Price Line Total Brewers Clarity 0.5g x 5 - Reduces Gluten and Chill Haze",
+            "amount": 0,
+            "unit": "kg",
+            "costPerUnit": 0,
+            "totalCost": 0
+          },
+          {
+            "name": "Simpsons Malt - Finest Pale Ale Golden Promise 25kg Sack Crushed?: Uncrushed Split?: 5x5kg",
+            "amount": 27,
+            "unit": "kg",
+            "costPerUnit": 1.7337,
+            "totalCost": 46.8099
+          },
+          {
+            "name": "Simpsons Malt - Golden Naked Oats® Crushed?: Uncrushed",
+            "amount": 4000,
+            "unit": "kg",
+            "costPerUnit": 0.0016,
+            "totalCost": 6.4
+          },
+          {
+            "name": "Page 1 of 2 The Malt Miller Ltd is a company registered in England and Wales. Registration No. NUMBER | EORI No. GB121123089000 | AWRS XQAW00000114959 | IOSS IM2500004423 Product Quantity Weight Price Line Total Crisp Maltings - Flaked Torrefied Barley Crushed?: Uncrushed",
+            "amount": 4000,
+            "unit": "kg",
+            "costPerUnit": 0.0011,
+            "totalCost": 4.4
+          }
+        ]
+      },
+      "hop": {
+        "count": 9,
+        "totalCost": 136.24,
+        "items": [
+          {
+            "name": "Chinook Whole Hops 100g-CF",
+            "amount": 899.9999999999999,
+            "unit": "g",
+            "costPerUnit": 0.0265,
+            "totalCost": 23.849999999999998
+          },
+          {
+            "name": "Citra® - BarthHaas® Pure Hop Pellets - 100g",
+            "amount": 400,
+            "unit": "g",
+            "costPerUnit": 0.0458,
+            "totalCost": 18.32
+          },
+          {
+            "name": "Azacca Whole Hops 100g-CF",
+            "amount": 400,
+            "unit": "g",
+            "costPerUnit": 0.0248,
+            "totalCost": 9.92
+          },
+          {
+            "name": "Galaxy® - BarthHaas® Pure Hop Pellets - 100g",
+            "amount": 400,
+            "unit": "g",
+            "costPerUnit": 0.0413,
+            "totalCost": 16.520000000000003
+          },
+          {
+            "name": "Mosaic Whole Hops 100g-CF",
+            "amount": 100,
+            "unit": "g",
+            "costPerUnit": 0.0979,
+            "totalCost": 9.790000000000001
+          },
+          {
+            "name": "Simcoe - T90 Pellets 100g-SP",
+            "amount": 899.9999999999999,
+            "unit": "g",
+            "costPerUnit": 0.0298,
+            "totalCost": 26.819999999999997
+          },
+          {
+            "name": "Cascade Whole Hops 100g-CF",
+            "amount": 100,
+            "unit": "g",
+            "costPerUnit": 0.0775,
+            "totalCost": 7.75
+          },
+          {
+            "name": "Amarillo Whole Hops 100g-CF",
+            "amount": 400,
+            "unit": "g",
+            "costPerUnit": 0.0428,
+            "totalCost": 17.119999999999997
+          },
+          {
+            "name": "Goldings (East Kent) Whole Hops 100G-CF",
+            "amount": 100,
+            "unit": "g",
+            "costPerUnit": 0.0615,
+            "totalCost": 6.15
+          }
+        ]
+      },
+      "misc": {
+        "count": 2,
+        "totalCost": 27.6,
+        "items": [
+          {
+            "name": "Duotight 8mm (5/16) x Ball Lock Disconnect - (Grey + Red Gas) 4 Pack",
+            "amount": 200,
+            "unit": "g",
+            "costPerUnit": 0.115,
+            "totalCost": 23
+          },
+          {
+            "name": "Brewing Sugar (Dextrose) 2kg",
+            "amount": 2000,
+            "unit": "g",
+            "costPerUnit": 0.0023,
+            "totalCost": 4.6
+          }
+        ]
+      },
+      "yeast": {
+        "count": 1,
+        "totalCost": 13.950000000000001,
+        "items": [
+          {
+            "name": "WLP001 California Ale Yeast - PurePitch® Next Generation BB: 12/05/2025",
+            "amount": 0.8,
+            "unit": "pkg",
+            "costPerUnit": 17.4375,
+            "totalCost": 13.950000000000001
+          }
+        ]
+      }
+    }
+  },
+  "timestamp": "2025-08-20T22:24:51.828Z"
+}
