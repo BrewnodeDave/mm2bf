@@ -396,6 +396,15 @@ export class BrewfatherAPI {
   async getFermentables() {
     try {
       const response = await this.client.get('/inventory/fermentables');
+      console.log('📦 FERMENTABLES API RESPONSE:', {
+        count: response.data.length,
+        sample: response.data.slice(0, 3).map(item => ({
+          name: item.name,
+          inventory: item.inventory,
+          type: typeof item.inventory,
+          allFields: Object.keys(item)
+        }))
+      });
       return response.data;
     } catch (error) {
       throw new Error(`Failed to get fermentables: ${error.response?.data?.message || error.message}`);
@@ -405,6 +414,7 @@ export class BrewfatherAPI {
   async getHops() {
     try {
       const response = await this.client.get('/inventory/hops');
+      console.log('Sample hop from API:', response.data[0]);
       return response.data;
     } catch (error) {
       throw new Error(`Failed to get hops: ${error.response?.data?.message || error.message}`);
@@ -469,9 +479,69 @@ export class BrewfatherAPI {
         }
         
         if (match) {
+          // Brewfather API stores inventory amount directly in the 'inventory' field
+          console.log('🔍 DEBUGGING INVENTORY CONVERSION:', {
+            ingredientName: ingredient.name,
+            matchName: match.name,
+            rawInventory: match.inventory,
+            typeOfInventory: typeof match.inventory
+          });
+          
+          // Simple and direct conversion
+          let currentAmount = 0;
+          if (match.inventory !== null && match.inventory !== undefined) {
+            currentAmount = Number(match.inventory) || 0;
+          }
+          
+          console.log('✅ Final currentAmount:', currentAmount);
+          
+          console.log(`Found match for ${ingredient.name}:`, {
+            name: match.name,
+            originalInventoryField: match.inventory,
+            currentAmount: currentAmount,
+            type: typeof match.inventory,
+            fullMatchObject: match
+          });
+          
+          // Get the appropriate unit for this ingredient type
+          let unit = 'units';
+          switch (type) {
+            case 'fermentable':
+              unit = 'kg';
+              break;
+            case 'hop':
+            case 'misc':
+              unit = 'g';
+              break;
+            case 'yeast':
+              unit = 'pkg';
+              break;
+          }
+          
+          const brewfatherItem = {
+            ...match,
+            currentAmount: currentAmount,
+            unit: unit,
+            // Create inventory object for frontend compatibility
+            inventory: {
+              amount: currentAmount,
+              unit: unit
+            },
+            // Also keep the raw inventory value for debugging
+            rawInventory: match.inventory
+          };
+          
+          console.log(`Final brewfatherItem for ${ingredient.name}:`, {
+            name: brewfatherItem.name,
+            currentAmount: brewfatherItem.currentAmount,
+            unit: brewfatherItem.unit,
+            inventory: brewfatherItem.inventory,
+            rawInventory: brewfatherItem.rawInventory
+          });
+          
           results[ingredient.name] = {
             found: true,
-            brewfatherItem: match,
+            brewfatherItem: brewfatherItem,
             confidence: match.name.toLowerCase() === ingredient.name.toLowerCase() ? 'high' : 'medium'
           };
         } else {
@@ -498,9 +568,15 @@ export class BrewfatherAPI {
         }
       }
       
+      console.log('Final matching results:', JSON.stringify(results, null, 2));
       return results;
     } catch (error) {
       console.error('Error finding matching ingredients:', error);
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        response: error.response?.data
+      });
       throw error;
     }
   }

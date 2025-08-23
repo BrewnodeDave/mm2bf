@@ -332,9 +332,28 @@
                         </div>
                         <div v-if="ingredient.brewfatherMatch" class="mt-2 p-2 bg-gray-50 rounded text-sm">
                             <strong>Brewfather:</strong> {{ ingredient.brewfatherMatch.name }}
-                            <span v-if="ingredient.brewfatherMatch.inventory">
-                                (Current: {{ ingredient.brewfatherMatch.inventory.amount || 0 }} {{ ingredient.brewfatherMatch.inventory.unit || 'units' }})
+                            <!-- Debug info - temporarily enabled -->
+                            <details class="text-xs text-gray-500 mt-1">
+                                <summary>Debug Data</summary>
+                                <pre class="bg-gray-100 p-2 rounded mt-1 text-xs overflow-auto">{{ JSON.stringify({
+                                    currentAmount: ingredient.brewfatherMatch.currentAmount,
+                                    unit: ingredient.brewfatherMatch.unit,
+                                    inventory: ingredient.brewfatherMatch.inventory,
+                                    rawInventory: ingredient.brewfatherMatch.rawInventory
+                                }, null, 2) }}</pre>
+                            </details>
+                            <!-- Current amount display - more compatible syntax -->
+                            <span>
+                                (Current: 
+{{ingredient.brewfatherMatch.inventory}})
                             </span>
+                            <!-- Debug values in frontend -->
+                            <div style="font-size: 10px; color: #666; margin-left: 20px;">
+Frontend Debug: currentAmount={{ ingredient.brewfatherMatch.currentAmount }}, 
+inventory.amount={{ ingredient.brewfatherMatch.inventory && 
+    ingredient.brewfatherMatch.inventory.amount }}, 
+type={{ typeof ingredient.brewfatherMatch.currentAmount }}
+                            </div>
                         </div>
                     </div>
                 </div>
