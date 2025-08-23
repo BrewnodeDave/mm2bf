@@ -12,7 +12,13 @@
 # API redirects
 [[redirects]]
   from = "/api/*"
-  to = "/.netlify/functions/api/:splat"
+  to = "/.netlify/functions/api-simple/:splat"
+  status = 200
+
+# Test endpoint
+[[redirects]]
+  from = "/test"
+  to = "/.netlify/functions/test"
   status = 200
 
 # Catch all for SPA
