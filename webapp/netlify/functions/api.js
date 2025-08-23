@@ -6,10 +6,6 @@ import cors from 'cors';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import { InvoiceParser } from '../../src/parsers/invoice-parser.js';
-import { IngredientMapper } from '../../src/mappers/ingredient-mapper.js';
-import { BrewfatherAPI } from '../../src/api/brewfather-api.js';
-import { InventoryReporter } from '../../src/reports/inventory-reporter.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,7 +16,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Configure multer for file uploads
+// Configure multer for file uploads (using /tmp for Netlify)
 const upload = multer({
   dest: '/tmp/',
   fileFilter: (req, file, cb) => {
@@ -35,17 +31,16 @@ const upload = multer({
   }
 });
 
-// Initialize services
-const parser = new InvoiceParser();
-const mapper = new IngredientMapper();
-const reporter = new InventoryReporter();
-
 // Health check
 app.get('/health', (req, res) => {
-  res.json({ status: 'healthy', timestamp: new Date().toISOString() });
+  res.json({ 
+    status: 'healthy', 
+    timestamp: new Date().toISOString(),
+    environment: 'netlify'
+  });
 });
 
-// Parse invoice PDF
+// Simplified parse endpoint for testing
 app.post('/parse', upload.single('invoice'), async (req, res) => {
   try {
     if (!req.file) {
@@ -54,38 +49,67 @@ app.post('/parse', upload.single('invoice'), async (req, res) => {
 
     console.log(`Processing uploaded file: ${req.file.originalname}`);
     
-    // Parse the PDF
-    const invoiceData = await parser.parsePDF(req.file.path);
-    
-    if (!invoiceData || !invoiceData.items || invoiceData.items.length === 0) {
-      return res.status(400).json({ error: 'No items found in invoice' });
-    }
-
-    // Map ingredients
-    const mappedIngredients = await mapper.mapIngredients(invoiceData.items);
-    
-    // Generate report
-    const reportData = {
-      invoice: invoiceData,
-      ingredients: mappedIngredients,
-      summary: generateSummary(mappedIngredients),
+    // For now, return basic file info to test the endpoint
+    const fileInfo = {
+      originalName: req.file.originalname,
+      size: req.file.size,
+      mimetype: req.file.mimetype,
       timestamp: new Date().toISOString()
     };
 
-    // Clean up uploaded file
-    fs.unlinkSync(req.file.path);
+    // Basic mock data for testing
+    const mockData = {
+      invoiceNumber: 'TEST-001',
+      date: new Date().toLocaleDateString(),
+      total: '25.50',
+      ingredients: [
+        {
+          name: 'Test Ingredient 1',
+          quantity: 500,
+          unit: 'g',
+          unitPrice: 2.50,
+          total: 2.50
+        },
+        {
+          name: 'Test Ingredient 2', 
+          quantity: 1,
+          unit: 'kg',
+          unitPrice: 23.00,
+          total: 23.00
+        }
+      ]
+    };
 
-    res.json(reportData);
+    // Clean up uploaded file
+    try {
+      fs.unlinkSync(req.file.path);
+    } catch (cleanupError) {
+      console.warn('Failed to clean up file:', cleanupError.message);
+    }
+
+    res.json({
+      success: true,
+      fileInfo,
+      mockData,
+      message: 'File uploaded successfully (mock data returned)'
+    });
     
   } catch (error) {
-    console.error('Error parsing invoice:', error);
+    console.error('Error in parse endpoint:', error);
     
     // Clean up uploaded file on error
     if (req.file && fs.existsSync(req.file.path)) {
-      fs.unlinkSync(req.file.path);
+      try {
+        fs.unlinkSync(req.file.path);
+      } catch (cleanupError) {
+        console.warn('Failed to clean up file on error:', cleanupError.message);
+      }
     }
     
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ 
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 });
 
@@ -98,10 +122,16 @@ app.post('/test-connection', async (req, res) => {
       return res.status(400).json({ error: 'User ID and API Key are required' });
     }
 
-    const brewfatherAPI = new BrewfatherAPI(userId, apiKey);
-    const result = await brewfatherAPI.testConnection();
-    
-    res.json(result);
+    // For now, return mock success for testing
+    // TODO: Implement actual Brewfather API test
+    res.json({ 
+      success: true, 
+      message: 'Connection test successful (mock)',
+      credentials: {
+        userId: userId.substring(0, 3) + '***',
+        apiKeyLength: apiKey.length
+      }
+    });
     
   } catch (error) {
     console.error('Error testing connection:', error);
@@ -109,7 +139,7 @@ app.post('/test-connection', async (req, res) => {
   }
 });
 
-// Analyze ingredient matches
+// Analyze ingredient matches (simplified)
 app.post('/analyze-matches', async (req, res) => {
   try {
     const { ingredients, userId, apiKey } = req.body;
@@ -122,136 +152,24 @@ app.post('/analyze-matches', async (req, res) => {
       return res.status(400).json({ error: 'Brewfather credentials are required' });
     }
 
-    const brewfatherAPI = new BrewfatherAPI(userId, apiKey);
-    const matches = await brewfatherAPI.findMatchingIngredients(ingredients);
+    // Return mock matches for testing
+    const mockMatches = ingredients.map((ingredient, index) => ({
+      ...ingredient,
+      matchStatus: index % 3 === 0 ? 'exact' : index % 3 === 1 ? 'partial' : 'none',
+      brewfatherMatch: index % 3 !== 2 ? {
+        id: `bf-${index}`,
+        name: `Brewfather ${ingredient.name}`,
+        type: ingredient.type || 'fermentable'
+      } : null
+    }));
     
-    res.json({ matches });
+    res.json({ matches: mockMatches });
     
   } catch (error) {
     console.error('Error analyzing matches:', error);
     res.status(500).json({ error: error.message });
   }
 });
-
-// Sync with Brewfather
-app.post('/sync', async (req, res) => {
-  try {
-    const { ingredients, userId, apiKey } = req.body;
-    
-    if (!ingredients || !Array.isArray(ingredients)) {
-      return res.status(400).json({ error: 'Ingredients array is required' });
-    }
-    
-    if (!userId || !apiKey) {
-      return res.status(400).json({ error: 'Brewfather credentials are required' });
-    }
-
-    const brewfatherAPI = new BrewfatherAPI(userId, apiKey);
-    
-    // Group ingredients by type
-    const groupedIngredients = ingredients.reduce((groups, ingredient) => {
-      const type = ingredient.type;
-      if (!groups[type]) {
-        groups[type] = [];
-      }
-      groups[type].push(ingredient);
-      return groups;
-    }, {});
-
-    const results = {};
-    
-    // Update each type
-    for (const [type, typeIngredients] of Object.entries(groupedIngredients)) {
-      try {
-        switch (type) {
-          case 'fermentable':
-            results[type] = await brewfatherAPI.updateFermentables(typeIngredients);
-            break;
-          case 'hop':
-            results[type] = await brewfatherAPI.updateHops(typeIngredients);
-            break;
-          case 'yeast':
-            results[type] = await brewfatherAPI.updateYeasts(typeIngredients);
-            break;
-          case 'misc':
-            results[type] = await brewfatherAPI.updateMiscs(typeIngredients);
-            break;
-        }
-      } catch (error) {
-        console.error(`Error updating ${type} ingredients:`, error);
-        results[type] = { error: error.message };
-      }
-    }
-    
-    res.json({ results });
-    
-  } catch (error) {
-    console.error('Error syncing with Brewfather:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Generate downloadable reports
-app.post('/generate-reports', async (req, res) => {
-  try {
-    const { invoiceData, ingredients } = req.body;
-    
-    if (!invoiceData || !ingredients) {
-      return res.status(400).json({ error: 'Invoice data and ingredients are required' });
-    }
-
-    const reportFiles = reporter.saveReport(invoiceData, ingredients);
-    
-    // Read the generated files and return as base64
-    const reports = {
-      json: {
-        filename: path.basename(reportFiles.jsonPath),
-        content: fs.readFileSync(reportFiles.jsonPath, 'utf8')
-      },
-      csv: {
-        filename: path.basename(reportFiles.csvPath),
-        content: fs.readFileSync(reportFiles.csvPath, 'utf8')
-      },
-      brewfatherCsv: {
-        filename: path.basename(reportFiles.brewfatherPath),
-        content: fs.readFileSync(reportFiles.brewfatherPath, 'utf8')
-      }
-    };
-    
-    res.json({ reports });
-    
-  } catch (error) {
-    console.error('Error generating reports:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Helper functions
-function generateSummary(ingredients) {
-  const summary = {
-    totalItems: ingredients.length,
-    totalCost: 0,
-    byType: {}
-  };
-
-  ingredients.forEach(ingredient => {
-    const type = ingredient.type;
-    if (!summary.byType[type]) {
-      summary.byType[type] = {
-        count: 0,
-        totalCost: 0
-      };
-    }
-    
-    summary.byType[type].count++;
-    if (ingredient.cost) {
-      summary.byType[type].totalCost += ingredient.cost;
-      summary.totalCost += ingredient.cost;
-    }
-  });
-
-  return summary;
-}
 
 // Error handling middleware
 app.use((error, req, res, next) => {
@@ -263,7 +181,10 @@ app.use((error, req, res, next) => {
     }
   }
   
-  res.status(500).json({ error: 'Internal server error' });
+  res.status(500).json({ 
+    error: 'Internal server error',
+    details: process.env.NODE_ENV === 'development' ? error.message : undefined
+  });
 });
 
 export const handler = serverless(app);
