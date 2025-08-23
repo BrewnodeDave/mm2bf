@@ -1,14 +1,10 @@
-import { Handler } from '@netlify/functions';
-import express from 'express';
-import serverless from 'serverless-http';
-import multer from 'multer';
-import cors from 'cors';
-import path from 'path';
-import fs from 'fs';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const { Handler } = require('@netlify/functions');
+const express = require('express');
+const serverless = require('serverless-http');
+const multer = require('multer');
+const cors = require('cors');
+const path = require('path');
+const fs = require('fs');
 
 const app = express();
 
@@ -187,4 +183,4 @@ app.use((error, req, res, next) => {
   });
 });
 
-export const handler = serverless(app);
+exports.handler = serverless(app);
