@@ -8,3 +8,15 @@
 
 [functions]
   node_bundler = "esbuild"
+
+# API redirects
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+
+# Catch all for SPA
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
