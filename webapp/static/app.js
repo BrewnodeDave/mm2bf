@@ -73,10 +73,10 @@ createApp({
     // Helper functions for sync results display
     const getSyncSummary = () => {
       if (!syncResults.value?.results) {
-        return { success: 0, notFound: 0, errors: 0 };
+        return { success: 0, notFound: 0, noMatch: 0, errors: 0 };
       }
       
-      let success = 0, notFound = 0, errors = 0;
+      let success = 0, notFound = 0, noMatch = 0, errors = 0;
       
       Object.values(syncResults.value.results).forEach(results => {
         if (Array.isArray(results)) {
@@ -85,6 +85,8 @@ createApp({
               success++;
             } else if (result.action === 'not_found') {
               notFound++;
+            } else if (result.action === 'no_match') {
+              noMatch++;
             } else {
               errors++;
             }
@@ -94,7 +96,7 @@ createApp({
         }
       });
       
-      return { success, notFound, errors };
+      return { success, notFound, noMatch, errors };
     };
 
     const getTypeIcon = (type) => {
@@ -316,6 +318,10 @@ createApp({
         const matchedIngredients = ingredientsWithMatches.value.filter(
           ingredient => ingredient.matchStatus === 'exact' || ingredient.matchStatus === 'partial'
         );
+        
+        const noMatchIngredients = ingredientsWithMatches.value.filter(
+          ingredient => ingredient.matchStatus === 'none'
+        );
 
         const response = await fetch('/api/sync', {
           method: 'POST',
@@ -334,6 +340,34 @@ createApp({
         }
 
         const data = await response.json();
+        
+        // Add "no match" items to the sync results for display
+        if (noMatchIngredients.length > 0) {
+          // Group no-match ingredients by type
+          const noMatchByType = {};
+          noMatchIngredients.forEach(ingredient => {
+            if (!noMatchByType[ingredient.type]) {
+              noMatchByType[ingredient.type] = [];
+            }
+            noMatchByType[ingredient.type].push({
+              name: ingredient.name,
+              success: false,
+              action: 'no_match',
+              error: 'Could not match to any Brewfather ingredient name'
+            });
+          });
+          
+          // Merge with existing results
+          data.results = data.results || {};
+          Object.keys(noMatchByType).forEach(type => {
+            if (data.results[type]) {
+              data.results[type] = data.results[type].concat(noMatchByType[type]);
+            } else {
+              data.results[type] = noMatchByType[type];
+            }
+          });
+        }
+        
         syncResults.value = data;
         showSuccess('Successfully synced with Brewfather!');
 

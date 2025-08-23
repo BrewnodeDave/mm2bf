@@ -332,28 +332,9 @@
                         </div>
                         <div v-if="ingredient.brewfatherMatch" class="mt-2 p-2 bg-gray-50 rounded text-sm">
                             <strong>Brewfather:</strong> {{ ingredient.brewfatherMatch.name }}
-                            <!-- Debug info - temporarily enabled -->
-                            <details class="text-xs text-gray-500 mt-1">
-                                <summary>Debug Data</summary>
-                                <pre class="bg-gray-100 p-2 rounded mt-1 text-xs overflow-auto">{{ JSON.stringify({
-                                    currentAmount: ingredient.brewfatherMatch.currentAmount,
-                                    unit: ingredient.brewfatherMatch.unit,
-                                    inventory: ingredient.brewfatherMatch.inventory,
-                                    rawInventory: ingredient.brewfatherMatch.rawInventory
-                                }, null, 2) }}</pre>
-                            </details>
-                            <!-- Current amount display - more compatible syntax -->
                             <span>
-                                (Current: 
-{{ingredient.brewfatherMatch.inventory}})
+                                (Current: {{ ingredient.brewfatherMatch.currentAmount || (ingredient.brewfatherMatch.inventory && ingredient.brewfatherMatch.inventory.amount) || 0 }} {{ ingredient.brewfatherMatch.unit || (ingredient.brewfatherMatch.inventory && ingredient.brewfatherMatch.inventory.unit) || 'units' }})
                             </span>
-                            <!-- Debug values in frontend -->
-                            <div style="font-size: 10px; color: #666; margin-left: 20px;">
-Frontend Debug: currentAmount={{ ingredient.brewfatherMatch.currentAmount }}, 
-inventory.amount={{ ingredient.brewfatherMatch.inventory && 
-    ingredient.brewfatherMatch.inventory.amount }}, 
-type={{ typeof ingredient.brewfatherMatch.currentAmount }}
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -384,7 +365,7 @@ type={{ typeof ingredient.brewfatherMatch.currentAmount }}
                     <!-- Summary -->
                     <div class="bg-blue-50 p-4 rounded-lg">
                         <h4 class="font-medium text-blue-800 mb-2">Summary</h4>
-                        <div class="grid grid-cols-3 gap-4 text-sm">
+                        <div class="grid grid-cols-4 gap-4 text-sm">
                             <div class="text-center">
                                 <div class="text-green-600 font-semibold">{{ getSyncSummary().success }}</div>
                                 <div class="text-gray-600">Updated</div>
@@ -392,6 +373,10 @@ type={{ typeof ingredient.brewfatherMatch.currentAmount }}
                             <div class="text-center">
                                 <div class="text-yellow-600 font-semibold">{{ getSyncSummary().notFound }}</div>
                                 <div class="text-gray-600">Not Found</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-gray-600 font-semibold">{{ getSyncSummary().noMatch }}</div>
+                                <div class="text-gray-600">No Match</div>
                             </div>
                             <div class="text-center">
                                 <div class="text-red-600 font-semibold">{{ getSyncSummary().errors }}</div>
@@ -438,8 +423,19 @@ type={{ typeof ingredient.brewfatherMatch.currentAmount }}
                                 </div>
                             </div>
                             
+                            <!-- Items with no match -->
+                            <div v-for="result in results.filter(r => !r.success && r.action === 'no_match')" 
+                                 :key="'nomatch-' + result.name" 
+                                 class="flex items-center justify-between p-2 bg-red-50 rounded border-l-4 border-red-400">
+                                <span class="text-gray-700">{{ result.name }}</span>
+                                <div class="flex items-center text-red-600 text-sm">
+                                    <i class="fas fa-times mr-1"></i>
+                                    No Match
+                                </div>
+                            </div>
+                            
                             <!-- Errors (unchanged) -->
-                            <div v-for="result in results.filter(r => !r.success && r.action !== 'not_found')" 
+                            <div v-for="result in results.filter(r => !r.success && r.action !== 'not_found' && r.action !== 'no_match')" 
                                  :key="'error-' + result.name" 
                                  class="flex items-center justify-between p-2 bg-red-50 rounded border-l-4 border-red-400">
                                 <span class="text-gray-700">{{ result.name }}</span>
@@ -455,11 +451,22 @@ type={{ typeof ingredient.brewfatherMatch.currentAmount }}
                     <div v-if="getSyncSummary().notFound > 0" class="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
                         <h4 class="font-medium text-yellow-800 mb-2 flex items-center">
                             <i class="fas fa-lightbulb mr-2"></i>
-                            Next Steps
+                            Next Steps - Not Found Items
                         </h4>
                         <p class="text-yellow-700 text-sm">
                             Items marked as "Not in Brewfather" need to be added to your Brewfather inventory first. 
                             You can add them manually through the Brewfather web app, then run the sync again to update quantities.
+                        </p>
+                    </div>
+                    
+                    <!-- Tips for no match items -->
+                    <div v-if="getSyncSummary().noMatch > 0" class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        <h4 class="font-medium text-gray-800 mb-2 flex items-center">
+                            <i class="fas fa-search mr-2"></i>
+                            Next Steps - No Match Items
+                        </h4>
+                        <p class="text-gray-700 text-sm">
+                            Items marked as "No Match" need ingredient names to be standardized. Rename items in your Brewfather inventory to match the invoice names.
                         </p>
                     </div>
                 </div>
