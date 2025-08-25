@@ -183,7 +183,7 @@ app.use((error, req, res, next) => {
   });
 });
 
-// Clean Netlify function without Express conflicts
+// Clean Netlify function - removing all Express code
 
 exports.handler = async (event, context) => {
   // Set CORS headers
@@ -221,7 +221,7 @@ exports.handler = async (event, context) => {
       originalPath: event.path,
       processedPath: path,
       method: event.httpMethod,
-      headers: event.headers
+      rawUrl: event.rawUrl
     });
 
     // Health check endpoint
@@ -321,6 +321,57 @@ exports.handler = async (event, context) => {
       };
     }
 
+    // Analyze matches endpoint
+    if (path === '/analyze-matches' && event.httpMethod === 'POST') {
+      console.log('Processing analyze-matches request');
+      
+      let body = {};
+      try {
+        body = JSON.parse(event.body || '{}');
+      } catch (e) {
+        return {
+          statusCode: 400,
+          headers,
+          body: JSON.stringify({ error: 'Invalid JSON in request body' })
+        };
+      }
+      
+      const { ingredients, userId, apiKey } = body;
+      
+      if (!ingredients || !Array.isArray(ingredients)) {
+        return {
+          statusCode: 400,
+          headers,
+          body: JSON.stringify({ error: 'Ingredients array is required' })
+        };
+      }
+      
+      if (!userId || !apiKey) {
+        return {
+          statusCode: 400,
+          headers,
+          body: JSON.stringify({ error: 'Brewfather credentials are required' })
+        };
+      }
+
+      // Return mock matches for testing
+      const mockMatches = ingredients.map((ingredient, index) => ({
+        ...ingredient,
+        matchStatus: index % 3 === 0 ? 'exact' : index % 3 === 1 ? 'partial' : 'none',
+        brewfatherMatch: index % 3 !== 2 ? {
+          id: `bf-${index}`,
+          name: `Brewfather ${ingredient.name}`,
+          type: ingredient.type || 'fermentable'
+        } : null
+      }));
+      
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({ matches: mockMatches })
+      };
+    }
+
     // Default response for unknown endpoints
     return {
       statusCode: 404,
@@ -329,10 +380,12 @@ exports.handler = async (event, context) => {
         error: 'Endpoint not found',
         requestedPath: path,
         method: event.httpMethod,
+        originalPath: event.path,
         availableEndpoints: [
           'GET /health',
           'POST /parse', 
-          'POST /test-connection'
+          'POST /test-connection',
+          'POST /analyze-matches'
         ]
       })
     };
