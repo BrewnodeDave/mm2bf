@@ -183,6 +183,8 @@ app.use((error, req, res, next) => {
   });
 });
 
+// Clean Netlify function without Express conflicts
+
 exports.handler = async (event, context) => {
   // Set CORS headers
   const headers = {
@@ -202,10 +204,25 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    // Extract the path - Netlify passes the path after the function name
-    // For /api/parse, event.path will be /parse
-    const path = event.path || '/';
-    console.log('Function called with path:', path, 'Method:', event.httpMethod);
+    // Extract the path after /api from the event
+    let path = event.path;
+    
+    // Remove the function path prefix if present
+    if (path.startsWith('/.netlify/functions/api')) {
+      path = path.replace('/.netlify/functions/api', '');
+    }
+    
+    // If no path or just /, default to root
+    if (!path || path === '') {
+      path = '/';
+    }
+    
+    console.log('API called:', {
+      originalPath: event.path,
+      processedPath: path,
+      method: event.httpMethod,
+      headers: event.headers
+    });
 
     // Health check endpoint
     if (path === '/health' && event.httpMethod === 'GET') {
@@ -215,47 +232,77 @@ exports.handler = async (event, context) => {
         body: JSON.stringify({
           status: 'healthy',
           timestamp: new Date().toISOString(),
-          environment: 'netlify'
+          environment: 'netlify',
+          path: path
         })
       };
     }
 
     // Parse endpoint for file uploads
     if (path === '/parse' && event.httpMethod === 'POST') {
-      console.log('Processing file upload request');
+      console.log('Processing parse request');
       
-      // Return mock data since file upload handling in serverless functions is complex
+      // For now, return mock data (file upload in serverless is complex)
       return {
         statusCode: 200,
         headers,
         body: JSON.stringify({
           success: true,
           message: 'File uploaded successfully (mock data)',
-          invoiceNumber: 'TEST-001',
-          date: new Date().toLocaleDateString(),
-          total: '25.50',
-          ingredients: [
-            {
-              name: 'Test Ingredient 1',
-              quantity: 500,
-              unit: 'g',
-              unitPrice: 2.50,
-              total: 2.50
-            },
-            {
-              name: 'Test Ingredient 2',
-              quantity: 1,
-              unit: 'kg',
-              unitPrice: 23.00,
-              total: 23.00
-            }
-          ]
+          fileInfo: {
+            originalName: 'test-invoice.pdf',
+            size: 12345,
+            mimetype: 'application/pdf',
+            timestamp: new Date().toISOString()
+          },
+          mockData: {
+            invoiceNumber: 'TEST-001',
+            date: new Date().toLocaleDateString(),
+            total: '25.50',
+            ingredients: [
+              {
+                name: 'Test Ingredient 1',
+                quantity: 500,
+                unit: 'g',
+                unitPrice: 2.50,
+                total: 2.50
+              },
+              {
+                name: 'Test Ingredient 2',
+                quantity: 1,
+                unit: 'kg',
+                unitPrice: 23.00,
+                total: 23.00
+              }
+            ]
+          }
         })
       };
     }
 
     // Test connection endpoint
     if (path === '/test-connection' && event.httpMethod === 'POST') {
+      console.log('Processing test-connection request');
+      
+      let body = {};
+      try {
+        body = JSON.parse(event.body || '{}');
+      } catch (e) {
+        console.warn('Failed to parse request body:', e.message);
+      }
+      
+      const { userId, apiKey } = body;
+      
+      if (!userId || !apiKey) {
+        return {
+          statusCode: 400,
+          headers,
+          body: JSON.stringify({ 
+            error: 'User ID and API Key are required' 
+          })
+        };
+      }
+      
       return {
         statusCode: 200,
         headers,
@@ -265,6 +312,10 @@ exports.handler = async (event, context) => {
           brewery: {
             name: 'Test Brewery',
             id: 'test-123'
+          },
+          credentials: {
+            userId: userId.substring(0, 3) + '***',
+            apiKeyLength: apiKey.length
           }
         })
       };
@@ -276,9 +327,13 @@ exports.handler = async (event, context) => {
       headers,
       body: JSON.stringify({
         error: 'Endpoint not found',
-        path: path,
+        requestedPath: path,
         method: event.httpMethod,
-        availableEndpoints: ['/health', '/parse', '/test-connection']
+        availableEndpoints: [
+          'GET /health',
+          'POST /parse', 
+          'POST /test-connection'
+        ]
       })
     };
 
@@ -289,7 +344,8 @@ exports.handler = async (event, context) => {
       headers,
       body: JSON.stringify({
         error: 'Internal server error',
-        message: error.message
+        message: error.message,
+        path: event.path
       })
     };
   }
