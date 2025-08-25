@@ -11,18 +11,8 @@
 
 # API redirects
 [[redirects]]
-  from = "/api/health"
-  to = "/.netlify/functions/api-simple/health"
-  status = 200
-
-[[redirects]]
-  from = "/api/parse"
-  to = "/.netlify/functions/api-simple/parse"
-  status = 200
-
-[[redirects]]
-  from = "/api/test-connection"
-  to = "/.netlify/functions/api-simple/test-connection"
+  from = "/api/*"
+  to = "/.netlify/functions/api-simple/:splat"
   status = 200
 
 # Test endpoint

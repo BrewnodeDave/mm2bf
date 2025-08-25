@@ -17,7 +17,22 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    const path = event.path.replace('/.netlify/functions/api', '');
+    // Handle path extraction for both direct access and redirected access
+    let path = event.path;
+    
+    // Remove function name prefix if present
+    if (path.includes('/.netlify/functions/api-simple')) {
+      path = path.replace('/.netlify/functions/api-simple', '');
+    }
+    
+    // If path is empty, default to root
+    if (!path || path === '') {
+      path = '/';
+    }
+    
+    console.log('Original path:', event.path);
+    console.log('Processed path:', path);
+    console.log('HTTP method:', event.httpMethod);
     
     // Health check endpoint
     if (path === '/health' && event.httpMethod === 'GET') {
