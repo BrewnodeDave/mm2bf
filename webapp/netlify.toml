@@ -12,7 +12,7 @@
 # API redirects
 [[redirects]]
   from = "/api/*"
-  to = "/.netlify/functions/api-simple/:splat"
+  to = "/.netlify/functions/api/*"
   status = 200
 
 # Test endpoint
