@@ -222,7 +222,7 @@ createApp({
         const formData = new FormData();
         formData.append('invoice', file);
 
-        const response = await fetch('/parse', {
+        const response = await fetch('/api/parse', {
           method: 'POST',
           body: formData
         });
