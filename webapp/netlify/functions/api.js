@@ -1,6 +1,13 @@
 // Clean Netlify function - ONLY Netlify handler, no Express
 
 exports.handler = async (event, context) => {
+  console.log('=== NETLIFY FUNCTION DEBUG ===');
+  console.log('Event path:', event.path);
+  console.log('Event method:', event.httpMethod);
+  console.log('Event headers:', JSON.stringify(event.headers, null, 2));
+  console.log('Event query:', event.queryStringParameters);
+  console.log('Context:', JSON.stringify(context, null, 2));
+  
   // Set CORS headers
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -11,6 +18,7 @@ exports.handler = async (event, context) => {
 
   // Handle preflight requests
   if (event.httpMethod === 'OPTIONS') {
+    console.log('=== HANDLING OPTIONS REQUEST ===');
     return {
       statusCode: 200,
       headers,
@@ -21,24 +29,28 @@ exports.handler = async (event, context) => {
   try {
     // Extract the path after /api from the event
     let path = event.path;
+    console.log('Original path:', path);
     
-    // Remove the function path prefix if present
+    // Remove /api prefix if present (this is what we need!)
+    if (path.startsWith('/api')) {
+      path = path.replace('/api', '');
+      console.log('Removed /api prefix, new path:', path);
+    }
+    
+    // Remove the function path prefix if present (for direct access)
     if (path.startsWith('/.netlify/functions/api')) {
       path = path.replace('/.netlify/functions/api', '');
+      console.log('Removed function prefix, new path:', path);
     }
     
     // If no path or just /, default to root
     if (!path || path === '') {
       path = '/';
+      console.log('Defaulted to root path:', path);
     }
     
-    console.log('API called:', {
-      originalPath: event.path,
-      processedPath: path,
-      method: event.httpMethod,
-      queryParams: event.queryStringParameters,
-      body: event.body ? event.body.substring(0, 100) + '...' : 'no body'
-    });
+    console.log('Final processed path:', path);
+    console.log('=== END DEBUG INFO ===');
 
     // Health check endpoint
     if (path === '/health' && event.httpMethod === 'GET') {
