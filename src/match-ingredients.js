@@ -43,8 +43,8 @@ class IngredientMatcher {
       
       console.log(`📄 Found ${mappedIngredients.length} ingredients in invoice\n`);
       
-      // Find matches in Brewfather
-      const matches = await this.brewfatherAPI.findMatchingIngredients(mappedIngredients);
+      // Use enhanced matching with separate type-specific matching
+      const matches = await this.performEnhancedMatching(mappedIngredients);
       
       // Display results
       this.displayMatches(matches, mappedIngredients);
@@ -56,6 +56,67 @@ class IngredientMatcher {
       console.error('Error analyzing invoice:', error);
       throw error;
     }
+  }
+
+  async performEnhancedMatching(mappedIngredients) {
+    console.log('🎯 Starting enhanced ingredient matching...\n');
+    
+    // Separate ingredients by type for optimized matching
+    const ingredientsByType = {
+      hop: mappedIngredients.filter(ing => ing.type === 'hop'),
+      yeast: mappedIngredients.filter(ing => ing.type === 'yeast'),
+      fermentable: mappedIngredients.filter(ing => ing.type === 'fermentable'),
+      misc: mappedIngredients.filter(ing => ing.type === 'misc')
+    };
+    
+    console.log('📊 Ingredient breakdown:');
+    Object.entries(ingredientsByType).forEach(([type, items]) => {
+      if (items.length > 0) {
+        console.log(`  ${type}: ${items.length} items`);
+      }
+    });
+    console.log('');
+    
+    const allMatches = {};
+    
+    try {
+      // Use enhanced hop matching
+      if (ingredientsByType.hop.length > 0) {
+        console.log('🌿 Matching hops with enhanced algorithm...');
+        const hopMatches = await this.brewfatherAPI.matchHops(ingredientsByType.hop);
+        Object.assign(allMatches, hopMatches);
+        console.log(`   Found ${Object.values(hopMatches).filter(m => m.found).length}/${ingredientsByType.hop.length} hop matches\n`);
+      }
+      
+      // Use enhanced yeast matching
+      if (ingredientsByType.yeast.length > 0) {
+        console.log('🍺 Matching yeasts with enhanced algorithm...');
+        const yeastMatches = await this.brewfatherAPI.matchYeasts(ingredientsByType.yeast);
+        Object.assign(allMatches, yeastMatches);
+        console.log(`   Found ${Object.values(yeastMatches).filter(m => m.found).length}/${ingredientsByType.yeast.length} yeast matches\n`);
+      }
+      
+      // Use enhanced fermentable matching
+      if (ingredientsByType.fermentable.length > 0) {
+        console.log('🍞 Matching fermentables with enhanced algorithm...');
+        const fermentableMatches = await this.brewfatherAPI.matchFermentables(ingredientsByType.fermentable);
+        Object.assign(allMatches, fermentableMatches);
+        console.log(`   Found ${Object.values(fermentableMatches).filter(m => m.found).length}/${ingredientsByType.fermentable.length} fermentable matches\n`);
+      }
+      
+      // Use enhanced misc item matching
+      if (ingredientsByType.misc.length > 0) {
+        console.log('📦 Matching misc items with enhanced algorithm...');
+        const miscMatches = await this.brewfatherAPI.matchMiscs(ingredientsByType.misc);
+        Object.assign(allMatches, miscMatches);
+        console.log(`   Found ${Object.values(miscMatches).filter(m => m.found).length}/${ingredientsByType.misc.length} misc matches\n`);
+      }
+      
+    } catch (error) {
+      console.error('Error during enhanced matching:', error);
+    }
+    
+    return allMatches;
   }
 
   displayMatches(matches, ingredients) {

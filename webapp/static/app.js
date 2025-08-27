@@ -18,13 +18,14 @@ createApp({
     const syncResults = ref(null);
     const showReportsModal = ref(false);
     const reports = ref(null);
+    const showCredentialsForm = ref(false); // New: only show when needed
 
     const brewfatherCredentials = reactive({
       userId: '',
       apiKey: ''
     });
 
-    // Load credentials from localStorage on startup
+    // Helper functions
     const loadCredentialsFromStorage = () => {
       try {
         const stored = localStorage.getItem('brewfatherCredentials');
@@ -36,10 +37,11 @@ createApp({
           
           // Auto-verify credentials if both are present
           if (credentials.userId && credentials.apiKey) {
-            console.log('Auto-verifying stored credentials...');
-            // Note: We don't auto-verify to avoid unnecessary API calls on every page load
-            // User can manually test if needed
+            autoVerifyCredentials();
           }
+        } else {
+          // No stored credentials, might need to show form later
+          console.log('No stored Brewfather credentials found');
         }
       } catch (error) {
         console.warn('Failed to load credentials from localStorage:', error);
@@ -67,6 +69,33 @@ createApp({
         console.log('Cleared Brewfather credentials from localStorage');
       } catch (error) {
         console.warn('Failed to clear credentials from localStorage:', error);
+      }
+    };
+
+    // Auto-verify credentials on startup if they exist
+    const autoVerifyCredentials = async () => {
+      if (brewfatherCredentials.userId && brewfatherCredentials.apiKey) {
+        try {
+          const response = await fetch('/api/test-connection', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(brewfatherCredentials)
+          });
+
+          const data = await response.json();
+          if (data.success) {
+            credentialsVerified.value = true;
+            console.log('Auto-verified Brewfather credentials');
+          } else {
+            console.log('Stored credentials are invalid');
+            showCredentialsForm.value = true;
+          }
+        } catch (err) {
+          console.log('Failed to auto-verify credentials:', err.message);
+          showCredentialsForm.value = true;
+        }
       }
     };
 
@@ -112,8 +141,8 @@ createApp({
 
     // Watch for credential changes to reset verification status
     watch(() => [brewfatherCredentials.userId, brewfatherCredentials.apiKey], () => {
-      // Reset verification status when credentials change
-      if (credentialsVerified.value) {
+      // Only reset if we had verified credentials and they're being cleared
+      if (credentialsVerified.value && (!brewfatherCredentials.userId || !brewfatherCredentials.apiKey)) {
         credentialsVerified.value = false;
         analysisComplete.value = false;
         matchResults.value = null;
@@ -244,6 +273,7 @@ createApp({
       }
     };
 
+    // Modified: Test connection and hide form on success
     const testConnection = async () => {
       clearMessages();
       testingConnection.value = true;
@@ -261,6 +291,7 @@ createApp({
 
         if (data.success) {
           credentialsVerified.value = true;
+          showCredentialsForm.value = false; // Hide the form
           // Save credentials to localStorage on successful verification
           saveCredentialsToStorage();
           showSuccess('Brewfather connection successful! Credentials saved.');
@@ -275,11 +306,20 @@ createApp({
       }
     };
 
+    // Modified: Try to analyze matches, prompt for credentials only if auth fails
     const analyzeMatches = async () => {
       clearMessages();
       analyzing.value = true;
 
       try {
+        // First attempt with stored/current credentials
+        let authCredentials = { ...brewfatherCredentials };
+        
+        // If no credentials are set, try with empty ones first (in case server has defaults)
+        if (!authCredentials.userId && !authCredentials.apiKey) {
+          authCredentials = { userId: '', apiKey: '' };
+        }
+
         const response = await fetch('/api/analyze-matches', {
           method: 'POST',
           headers: {
@@ -287,18 +327,31 @@ createApp({
           },
           body: JSON.stringify({
             ingredients: invoiceData.value.ingredients,
-            ...brewfatherCredentials
+            ...authCredentials
           })
         });
 
         if (!response.ok) {
           const errorData = await response.json();
+          
+          // Check if it's an authentication error
+          if (response.status === 401 || response.status === 403 || 
+              (errorData.error && errorData.error.toLowerCase().includes('auth'))) {
+            
+            // Authentication failed - show credentials form
+            showCredentialsForm.value = true;
+            credentialsVerified.value = false;
+            throw new Error('Brewfather authentication required. Please enter your credentials.');
+          }
+          
           throw new Error(errorData.error || 'Failed to analyze matches');
         }
 
         const data = await response.json();
         matchResults.value = data;
         analysisComplete.value = true;
+        credentialsVerified.value = true; // Mark as verified if analysis succeeded
+        showCredentialsForm.value = false; // Hide form if it was shown
         showSuccess('Ingredient matching analysis complete');
 
       } catch (err) {
@@ -308,6 +361,7 @@ createApp({
       }
     };
 
+    // Modified: Try sync, prompt for credentials only if auth fails
     const syncWithBrewfather = async () => {
       clearMessages();
       syncing.value = true;
@@ -330,6 +384,16 @@ createApp({
 
         if (!response.ok) {
           const errorData = await response.json();
+          
+          // Check if it's an authentication error
+          if (response.status === 401 || response.status === 403 || 
+              (errorData.error && errorData.error.toLowerCase().includes('auth'))) {
+            
+            showCredentialsForm.value = true;
+            credentialsVerified.value = false;
+            throw new Error('Brewfather authentication required. Please verify your credentials.');
+          }
+          
           throw new Error(errorData.error || 'Failed to sync with Brewfather');
         }
 
@@ -342,6 +406,16 @@ createApp({
       } finally {
         syncing.value = false;
       }
+    };
+
+    // New: Method to manually show credentials form
+    const showCredentials = () => {
+      showCredentialsForm.value = true;
+    };
+
+    // New: Method to hide credentials form
+    const hideCredentials = () => {
+      showCredentialsForm.value = false;
     };
 
     const generateReports = async () => {
@@ -432,6 +506,7 @@ createApp({
       showReportsModal,
       reports,
       brewfatherCredentials,
+      showCredentialsForm, // New
 
       // Computed
       ingredientsWithMatches,
@@ -449,7 +524,9 @@ createApp({
       downloadReport,
       resetApp,
       clearStoredCredentials,
-      getTypeIcon
+      getTypeIcon,
+      showCredentials, // New
+      hideCredentials  // New
     };
   }
 }).mount('#app');
