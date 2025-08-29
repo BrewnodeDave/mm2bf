@@ -74,88 +74,78 @@ export class BrewfatherAPI {
   }
 
   async updateFermentables(fermentables) {
+    console.log(`\n🌾 Updating ${fermentables.length} fermentable(s) in Brewfather...`);
+    
     const results = [];
     
-    // Get existing fermentables first
-    const existingFermentables = await this.getFermentables();
-    
     for (const fermentable of fermentables) {
-      try {
-        console.log(`Processing fermentable: ${fermentable.name}`);
-        
-        // Try to find existing item by name
-        const existing = existingFermentables.find(item => 
-          item.name && item.name.toLowerCase().includes(fermentable.name.toLowerCase().substring(0, 20))
-        );
-        
-        if (existing) {
-          // Read the actual current inventory amount
-          const currentAmount = existing.inventory || 0;
-          const adjustAmount = fermentable.amount || 0;
-          const newTotalAmount = currentAmount + adjustAmount;
-          
-          console.log(`→ ${fermentable.name}: Current ${currentAmount}kg, Adding +${adjustAmount}kg`);
-          
-          // Update existing item using inventory_adjust
-          const updateData = {
-            inventory_adjust: adjustAmount
-          };
-          
-          // Add cost if provided
-          if (fermentable.cost) {
-            updateData.cost = fermentable.cost;
-            updateData.costUnit = 'GBP';
-          }
-          
-          const response = await this.client.patch(`/inventory/fermentables/${existing._id}`, updateData);
-          
-          if (response.data === "Updated") {
-            results.push({
-              name: fermentable.name,
-              success: true,
-              action: 'adjusted',
-              id: existing._id,
-              currentAmount: currentAmount,  // Actual current amount from existing.inventory
-              adjustedBy: adjustAmount,
-              newAmount: newTotalAmount,
-              unit: fermentable.unit || 'kg'
-            });
-          } else {
-            if (response.data === "Nothing to update") {
-              results.push({
-                name: fermentable.name,
-                success: false,
-                action: 'error',
-                error: 'API key has read-only permissions. Please generate a new API key with read/write permissions in Brewfather Settings → API Keys.'
-              });
-            } else {
-              results.push({
-                name: fermentable.name,
-                success: false,
-                action: 'error',
-                error: `Unexpected API response: ${response.status} ${JSON.stringify(response.data)}`
-              });
+        try {
+            console.log(`\n  Processing: ${fermentable.name}`);
+            console.log(`    Match status: ${fermentable.matchStatus || 'unknown'}`);
+            console.log(`    Amount to add: ${fermentable.amount} ${fermentable.unit}`);
+            
+            if (!fermentable.brewfatherMatch) {
+                console.log(`    ❌ No Brewfather match found`);
+                results.push({
+                    name: fermentable.name,
+                    success: false,
+                    action: 'not_found',
+                    error: 'No matching item found in Brewfather inventory'
+                });
+                continue;
             }
-          }
-        } else {
-          // Item not found in existing inventory
-          results.push({
-            name: fermentable.name,
-            success: false,
-            action: 'not_found',
-            error: 'Item not found in Brewfather inventory. Add it manually first, then run this tool to update quantities.'
-          });
+            
+            const brewfatherItem = fermentable.brewfatherMatch;
+            const currentAmount = brewfatherItem.inventory?.amount || 0;
+            const newAmount = currentAmount + fermentable.amount;
+            
+            console.log(`    Current amount: ${currentAmount} ${brewfatherItem.inventory?.unit || fermentable.unit}`);
+            console.log(`    New amount: ${newAmount} ${brewfatherItem.inventory?.unit || fermentable.unit}`);
+            
+            // Warn about partial matches
+            if (fermentable.matchStatus === 'partial') {
+                console.log(`    ⚠️  WARNING: This is a partial match - please verify the ingredient is correct`);
+            }
+            
+            const updateData = {
+                inventory: {
+                    amount: newAmount,
+                    unit: brewfatherItem.inventory?.unit || fermentable.unit
+                }
+            };
+            
+            const response = await this.client.patch(`/inventory/fermentables/${brewfatherItem._id}`, updateData);
+            
+            if (response.status === 200) {
+                console.log(`    ✅ Successfully updated`);
+                results.push({
+                    name: fermentable.name,
+                    success: true,
+                    action: 'updated',
+                    currentAmount: currentAmount,
+                    newAmount: newAmount,
+                    adjustedBy: fermentable.amount,
+                    unit: brewfatherItem.inventory?.unit || fermentable.unit,
+                    matchStatus: fermentable.matchStatus,
+                    brewfatherName: brewfatherItem.name
+                });
+            } else {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+        } catch (error) {
+            console.log(`    ❌ Error: ${error.message}`);
+            results.push({
+                name: fermentable.name,
+                success: false,
+                action: 'error',
+                error: error.message,
+                matchStatus: fermentable.matchStatus
+            });
         }
         
-      } catch (error) {
-        console.error(`Failed to update fermentable ${fermentable.name}:`, error.response?.data || error.message);
-        results.push({
-          name: fermentable.name,
-          success: false,
-          action: 'error',
-          error: error.response?.data?.message || error.message
-        });
-      }
+        // Add delay to avoid rate limiting
+        await new Promise(resolve => setTimeout(resolve, 100));
     }
     
     return results;

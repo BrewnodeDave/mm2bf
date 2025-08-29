@@ -252,8 +252,8 @@ function generateSummary(ingredients) {
     
     summary.byType[type].count++;
     if (ingredient.cost) {
-      summary.byType[type].totalCost += ingredient.cost;
-      summary.totalCost += ingredient.cost;
+      summary.byType[type].totalCost += (ingredient.cost * ingredient.amount);
+      summary.totalCost += (ingredient.cost * ingredient.quantity);
     }
   });
 

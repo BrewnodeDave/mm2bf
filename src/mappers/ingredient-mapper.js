@@ -85,7 +85,7 @@ export class IngredientMapper {
       'maris otter', 'golden promise', 'cara', 'special'
     ];
     
-    return fermentableWords.some(word => name.includes(word));
+    return fermentableWords.some(word => new RegExp(`\\b${word}\\b`, 'i').test(name));
   }
 
   isHop(name) {
@@ -132,7 +132,7 @@ export class IngredientMapper {
       name: item.name,
       subType,
       color,
-      amount: this.convertToKg(item.quantity, item.unit),
+      amount: this.convertToKg(item.quantity, 'g'/*item.unit*/),
       unit: 'kg',
       cost: this.calculateCostPerUnit(item.price, this.convertToKg(item.quantity, item.unit), 'kg'),
       supplier: 'Malt Miller',

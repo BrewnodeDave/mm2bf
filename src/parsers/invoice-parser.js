@@ -79,7 +79,7 @@ export class InvoiceParser {
 
     // Look for total - try multiple patterns
     const totalMatches = [
-      /Total\s+£(\d+\.\d{2})/i,
+      /Total\s+£\s*(\d+\.\d{2})\s*\(includes\s+£\s*\d+\.\d{2}\s+VAT\)/i,
       /Grand Total[:\s]*£(\d+\.\d{2})/i,
       /Final Total[:\s]*£(\d+\.\d{2})/i
     ];
@@ -419,5 +419,226 @@ export class InvoiceParser {
     const lowerLine = line.toLowerCase();
     return ingredientKeywords.some(keyword => lowerLine.includes(keyword)) ||
            /\d+(?:\.\d+)?\s*(kg|g|L|ml|pkt|sachets?)/i.test(line);
+  }
+
+  // Add more robust invoice parsing for different suppliers
+
+  parseInvoiceAdvanced(text) {
+    console.log('📄 Starting advanced invoice parsing...');
+    
+    const lines = text.split('\n');
+    const items = [];
+    let invoiceData = {
+        number: null,
+        total: null,
+        subtotal: null,
+        vat: null,
+        shipping: null
+    };
+    
+    // Extract invoice metadata
+    invoiceData = this.extractInvoiceMetadata(text);
+    
+    // Different parsing strategies for different suppliers
+    const supplier = this.detectSupplier(text);
+    console.log(`🏪 Detected supplier: ${supplier}`);
+    
+    switch (supplier) {
+        case 'TMM':
+            items.push(...this.parseTMMInvoice(lines));
+            break;
+        case 'BrewUK':
+            items.push(...this.parseBrewUKInvoice(lines));
+            break;
+        case 'HopAndGrape':
+            items.push(...this.parseHopAndGrapeInvoice(lines));
+            break;
+        default:
+            items.push(...this.parseGenericInvoice(lines));
+    }
+    
+    console.log(`✅ Parsed ${items.length} brewing ingredients`);
+    
+    const summary = this.calculateAdvancedSummary(items, invoiceData);
+    
+    return {
+        invoice: {
+            ...invoiceData,
+            supplier,
+            items
+        },
+        summary
+    };
+  }
+
+  extractInvoiceMetadata(text) {
+    const metadata = {
+        number: null,
+        total: null,
+        subtotal: null,
+        vat: null,
+        shipping: null
+    };
+    
+    // Invoice number patterns
+    const invoicePatterns = [
+        /Invoice\s+(?:Number\s*[:\-]?\s*)?(\d+)/i,
+        /INV[\-\s]*(\d+)/i,
+        /Invoice[\s\-]*(\d+)/i,
+        /Order\s+(?:Number\s*[:\-]?\s*)?(\d+)/i
+    ];
+    
+    // Total patterns (more comprehensive)
+    const totalPatterns = [
+        /(?:Total|Amount)\s*(?:Inc|Including)?\s*(?:VAT)?\s*[£]?\s*(\d+\.?\d*)/i,
+        /Grand\s*Total\s*[£]?\s*(\d+\.?\d*)/i,
+        /Amount\s*Due\s*[£]?\s*(\d+\.?\d*)/i,
+        /Final\s*Amount\s*[£]?\s*(\d+\.?\d*)/i
+    ];
+    
+    // VAT patterns
+    const vatPatterns = [
+        /VAT\s*(?:@\s*\d+%)?\s*[£]?\s*(\d+\.?\d*)/i,
+        /Tax\s*[£]?\s*(\d+\.?\d*)/i
+    ];
+    
+    // Subtotal patterns
+    const subtotalPatterns = [
+        /Sub\s*Total\s*[£]?\s*(\d+\.?\d*)/i,
+        /Net\s*Total\s*[£]?\s*(\d+\.?\d*)/i,
+        /Goods\s*Total\s*[£]?\s*(\d+\.?\d*)/i
+    ];
+    
+    // Shipping patterns
+    const shippingPatterns = [
+        /(?:Shipping|Delivery|Postage)\s*[£]?\s*(\d+\.?\d*)/i,
+        /Carriage\s*[£]?\s*(\d+\.?\d*)/i
+    ];
+    
+    const lines = text.split('\n');
+    
+    for (const line of lines) {
+        // Try to extract invoice number
+        if (!metadata.number) {
+            for (const pattern of invoicePatterns) {
+                const match = line.match(pattern);
+                if (match) {
+                    metadata.number = match[1];
+                    break;
+                }
+            }
+        }
+        
+        // Try to extract totals
+        if (!metadata.total) {
+            for (const pattern of totalPatterns) {
+                const match = line.match(pattern);
+                if (match) {
+                    const value = parseFloat(match[1]);
+                    if (!isNaN(value) && value > 0) {
+                        metadata.total = value;
+                        console.log(`📊 Found total: £${value} from: "${line.trim()}"`);
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // Extract VAT
+        if (!metadata.vat) {
+            for (const pattern of vatPatterns) {
+                const match = line.match(pattern);
+                if (match) {
+                    const value = parseFloat(match[1]);
+                    if (!isNaN(value) && value >= 0) {
+                        metadata.vat = value;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // Extract subtotal
+        if (!metadata.subtotal) {
+            for (const pattern of subtotalPatterns) {
+                const match = line.match(pattern);
+                if (match) {
+                    const value = parseFloat(match[1]);
+                    if (!isNaN(value) && value > 0) {
+                        metadata.subtotal = value;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // Extract shipping
+        if (!metadata.shipping) {
+            for (const pattern of shippingPatterns) {
+                const match = line.match(pattern);
+                if (match) {
+                    const value = parseFloat(match[1]);
+                    if (!isNaN(value) && value >= 0) {
+                        metadata.shipping = value;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    
+    return metadata;
+  }
+
+  detectSupplier(text) {
+    const lowerText = text.toLowerCase();
+    
+    if (lowerText.includes('the malt miller') || lowerText.includes('maltmiller')) {
+        return 'TMM';
+    } else if (lowerText.includes('brew uk') || lowerText.includes('brewuk')) {
+        return 'BrewUK';
+    } else if (lowerText.includes('hop & grape') || lowerText.includes('hop and grape')) {
+        return 'HopAndGrape';
+    }
+    
+    return 'Generic';
+  }
+
+  calculateAdvancedSummary(items, invoiceData) {
+    const byType = {};
+    let calculatedItemsTotal = 0;
+    
+    items.forEach(item => {
+        if (!byType[item.type]) {
+            byType[item.type] = { count: 0, totalCost: 0 };
+        }
+        byType[item.type].count++;
+        byType[item.type].totalCost += item.cost || 0;
+        calculatedItemsTotal += item.cost || 0;
+    });
+    
+    // Calculate expected total from components
+    let expectedTotal = calculatedItemsTotal;
+    if (invoiceData.vat) expectedTotal += invoiceData.vat;
+    if (invoiceData.shipping) expectedTotal += invoiceData.shipping;
+    
+    return {
+        totalItems: items.length,
+        totalCost: invoiceData.total || calculatedItemsTotal, // Use actual invoice total
+        calculatedTotal: calculatedItemsTotal, // Items only
+        actualTotal: invoiceData.total, // From PDF
+        subtotal: invoiceData.subtotal,
+        vat: invoiceData.vat,
+        shipping: invoiceData.shipping,
+        expectedTotal, // Calculated from components
+        costDiscrepancy: invoiceData.total ? Math.abs(invoiceData.total - expectedTotal) : 0,
+        byType,
+        breakdown: {
+            items: calculatedItemsTotal,
+            vat: invoiceData.vat || 0,
+            shipping: invoiceData.shipping || 0,
+            other: invoiceData.total ? (invoiceData.total - calculatedItemsTotal - (invoiceData.vat || 0) - (invoiceData.shipping || 0)) : 0
+        }
+    };
   }
 }

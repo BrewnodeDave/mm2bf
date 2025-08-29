@@ -25,6 +25,9 @@ createApp({
       apiKey: ''
     });
 
+    // Add this flag to control inclusion of partial matches
+    const includePartialMatches = ref(true);
+
     // Helper functions
     const loadCredentialsFromStorage = () => {
       try {
@@ -507,6 +510,7 @@ createApp({
       reports,
       brewfatherCredentials,
       showCredentialsForm, // New
+      includePartialMatches, // Expose the flag
 
       // Computed
       ingredientsWithMatches,
