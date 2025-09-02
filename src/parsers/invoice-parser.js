@@ -115,9 +115,10 @@ export class InvoiceParser {
           const lineTotalMatch = prices[i + 2];
           
           // Find the start of this item (after the previous item's last price)
-          const startIndex = i === 0 ? 
-            itemsSection.indexOf('Large Grain Bag') : // Skip the header for first item
-            prices[i - 1].index + prices[i - 1][0].length;
+            // For the first item, start after the header line; otherwise, after the previous price
+            const startIndex = i === 0
+            ? headerMatch + 'Product Quantity Weight Price VAT Line Total'.length
+            : prices[i - 1].index + prices[i - 1][0].length;
           
           // Extract the item text from start to just before the unit price
           const itemText = itemsSection.substring(startIndex, prices[i].index).trim();
@@ -156,10 +157,14 @@ export class InvoiceParser {
       unit = quantityMatch[3];
       
       // If we have both quantity and weight, multiply them for total weight
-      if (unit === 'kg' || unit === 'g') {
+      if (unit === 'kg') {
+        quantity =  weightValue;
+      }
+     
+       if (unit === 'g') {
         quantity = quantity * weightValue;
       }
-      
+     
       // Remove the quantity/weight part from the item text
       itemText = itemText.replace(quantityMatch[0], '').trim();
     } else {

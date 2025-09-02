@@ -2,7 +2,7 @@
 
 app.post('/api/sync-brewfather', async (req, res) => {
     try {
-        const { credentials, ingredients, includePartialMatches = false } = req.body;
+        const { credentials, ingredients, includePartialMatches = true } = req.body;
         
         if (!credentials?.userId || !credentials?.apiKey) {
             return res.status(400).json({ error: 'Missing Brewfather credentials' });
