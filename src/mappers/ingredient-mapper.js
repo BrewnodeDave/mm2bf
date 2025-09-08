@@ -328,7 +328,7 @@ export class IngredientMapper {
     // Calculate cost per unit
     const costPerUnit = totalPrice / amount;
     
-    // Round to 4 decimal places for precision
-    return Math.round(costPerUnit * 10000) / 10000;
+    // Round to 2 decimal places for precision
+    return Math.round(costPerUnit * 100) / 100;
   }
 }
