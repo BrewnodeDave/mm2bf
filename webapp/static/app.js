@@ -252,7 +252,8 @@ createApp({
         const formData = new FormData();
         formData.append('invoice', file);
 
-        const response = await fetch('/api/parse', {
+        // const response = await fetch('/api/parse', {
+        const response = await fetch('/.netlify/functions/parse', {
           method: 'POST',
           body: formData
         });
