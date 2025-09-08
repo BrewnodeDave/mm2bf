@@ -79,7 +79,7 @@ export class IngredientMapper {
     }
     
     const fermentableWords = [
-      'malt', 'grain', 'wheat', 'barley', 'oats', 'rye', 'corn', 'rice',
+      'malt', 'grain', 'wheat', 'barley', 'oat', 'flakes', 'flaked', 'oats', 'rye', 'corn', 'rice',
       'pale', 'pilsner', 'munich', 'vienna', 'crystal', 'caramel',
       'chocolate', 'black', 'roasted', 'smoked', 'amber', 'base',
       'maris otter', 'golden promise', 'cara', 'special'
@@ -132,7 +132,7 @@ export class IngredientMapper {
       name: item.name,
       subType,
       color,
-      amount: this.convertToKg(item.quantity, 'g'/*item.unit*/),
+      amount: this.convertToKg(item.quantity, item.unit),
       unit: 'kg',
       cost: this.calculateCostPerUnit(item.price, this.convertToKg(item.quantity, item.unit), 'kg'),
       supplier: 'Malt Miller',

@@ -120,9 +120,14 @@ export class InvoiceParser {
             ? headerMatch + 'Product Quantity Weight Price VAT Line Total'.length
             : prices[i - 1].index + prices[i - 1][0].length;
           
+            const endIndex = i === 0
+            ? startIndex + 90
+            : prices[i].index;
+
+          const foo = i === 0 ? text : itemsSection;
           // Extract the item text from start to just before the unit price
-          const itemText = itemsSection.substring(startIndex, prices[i].index).trim();
-          
+          const itemText = foo.substring(startIndex, endIndex).trim();
+
           if (itemText && itemText.length > 3) {
             const item = this.parseItemText(itemText, parseFloat(lineTotalMatch[0].replace('£', '').trim()));
             if (item) {
