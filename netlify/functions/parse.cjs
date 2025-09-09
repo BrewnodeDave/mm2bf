@@ -1,4 +1,4 @@
-const Busboy = require('busboy');
+const busboy = require('@fastify/busboy');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -15,17 +15,17 @@ exports.handler = async (event) => {
   }
 
   return new Promise((resolve, reject) => {
-    const busboy = new Busboy({ headers: { 'content-type': contentType } });
+    const bb = new busboy.Busboy({ headers: { 'content-type': contentType } });
     let filePath = '';
     let fileWriteStream;
 
-    busboy.on('file', (fieldname, file, filename) => {
+    bb.on('file', (fieldname, file, filename) => {
       filePath = path.join(os.tmpdir(), filename);
       fileWriteStream = fs.createWriteStream(filePath);
       file.pipe(fileWriteStream);
     });
 
-    busboy.on('finish', async () => {
+    bb.on('finish', async () => {
       try {
         const parser = new InvoiceParser();
         const invoiceData = await parser.parsePDF(filePath);
@@ -44,6 +44,6 @@ exports.handler = async (event) => {
       }
     });
 
-    busboy.end(Buffer.from(event.body, event.isBase64Encoded ? 'base64' : 'utf8'));
+    bb.end(Buffer.from(event.body, event.isBase64Encoded ? 'base64' : 'utf8'));
   });
 };
