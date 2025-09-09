@@ -1,10 +1,11 @@
 [build]
   publish = "webapp/static"
   functions = "netlify/functions"
-  command = "cd webapp && npm install"
+  command = "npm install"
 
 [dev]
   publish = "static"
   port = 8888
   autoLaunch = true
   framework = "#static"
+  
