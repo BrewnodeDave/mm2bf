@@ -60,7 +60,7 @@ The application will be available at `http://localhost:3000`
 
 The webapp provides a REST API that can be used independently:
 
-### `POST /api/parse`
+### `POST /.netlify/functions/parse`
 Upload and parse a Malt Miller invoice PDF
 - **Body**: multipart/form-data with `invoice` file
 - **Returns**: Parsed invoice data with categorized ingredients

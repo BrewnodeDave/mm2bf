@@ -48,7 +48,7 @@ app.get('/api/health', (req, res) => {
 });
 
 // Parse invoice PDF
-app.post('/api/parse', upload.single('invoice'), async (req, res) => {
+app.post('/.netlify/functions/parse', upload.single('invoice'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No PDF file uploaded' });
