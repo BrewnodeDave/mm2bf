@@ -63,10 +63,16 @@ exports.handler = async (event) => {
       }
     }
     
-    res.json({ results });
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ results })
+    };
     
   } catch (error) {
     console.error('Error syncing with Brewfather:', error);
-    res.status(500).json({ error: error.message });
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: error.message })
+    };
   }
 }

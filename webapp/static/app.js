@@ -79,7 +79,7 @@ createApp({
     const autoVerifyCredentials = async () => {
       if (brewfatherCredentials.userId && brewfatherCredentials.apiKey) {
         try {
-          const response = await fetch('/api/test-connection', {
+          const response = await fetch('/.netlify/functions/test-connection', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json'

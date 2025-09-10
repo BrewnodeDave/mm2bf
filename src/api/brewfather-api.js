@@ -96,11 +96,11 @@ export class BrewfatherAPI {
             }
             
             const brewfatherItem = fermentable.brewfatherMatch;
-            const currentAmount = brewfatherItem.inventory?.amount || 0;
-            const newAmount = currentAmount + fermentable.amount;
-            
-            console.log(`    Current amount: ${currentAmount} ${brewfatherItem.inventory?.unit || fermentable.unit}`);
-            console.log(`    New amount: ${newAmount} ${brewfatherItem.inventory?.unit || fermentable.unit}`);
+            const currentAmount = brewfatherItem?.inventory || 0;
+            const newAmount = Math.trunc((currentAmount + fermentable.amount)*100)/100; // Round to 2 decimal places  
+
+            console.log(`    Current amount: ${currentAmount} ${brewfatherItem?.inventory?.unit || fermentable.unit}`);
+            console.log(`    New amount: ${newAmount} ${brewfatherItem?.inventory?.unit || fermentable.unit}`);
             
             // Warn about partial matches
             if (fermentable.matchStatus === 'partial') {
@@ -108,14 +108,13 @@ export class BrewfatherAPI {
             }
             
             const updateData = {
-                inventory: {
-                    amount: newAmount,
-                    unit: brewfatherItem.inventory?.unit || fermentable.unit
-                }
+                inventory: newAmount
             };
             
-            const response = await this.client.patch(`/inventory/fermentables/${brewfatherItem._id}`, updateData);
-            
+            const response = await this.client.patch(
+              `/inventory/fermentables/${brewfatherItem._id}?inventory=${newAmount}`
+            );
+
             if (response.status === 200) {
                 console.log(`    ✅ Successfully updated`);
                 results.push({
@@ -313,7 +312,8 @@ export class BrewfatherAPI {
             updateData.costUnit = 'GBP';
           }
           
-          const response = await this.client.patch(`/inventory/yeasts/${existing._id}`, updateData);
+          const response = await this.client.patch(
+            `/inventory/yeasts/${existing._id}`, updateData);
           
           if (response.data === "Updated") {
             results.push({
@@ -385,7 +385,9 @@ export class BrewfatherAPI {
             updateData.costUnit = 'GBP';
           }
           
-          const response = await this.client.patch(`/inventory/miscs/${existing._id}`, updateData);
+          const response = await this.client.patch(
+            `/inventory/miscs/${existing._id}`, updateData
+          );
           
           if (response.data === "Updated") {
             results.push({

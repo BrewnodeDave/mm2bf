@@ -92,7 +92,7 @@ app.post('/.netlify/functions/parse', upload.single('invoice'), async (req, res)
 });
 
 // Test Brewfather connection
-app.post('/api/test-connection', async (req, res) => {
+app.post('/.netlify/functions/test-connection', async (req, res) => {
   try {
     const { userId, apiKey } = req.body;
     
