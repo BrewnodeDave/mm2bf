@@ -106,11 +106,7 @@ export class BrewfatherAPI {
             if (fermentable.matchStatus === 'partial') {
                 console.log(`    ⚠️  WARNING: This is a partial match - please verify the ingredient is correct`);
             }
-            
-            const updateData = {
-                inventory: newAmount
-            };
-            
+
             const response = await this.client.patch(
               `/inventory/fermentables/${brewfatherItem._id}?inventory=${newAmount}`
             );
@@ -184,16 +180,12 @@ export class BrewfatherAPI {
           console.log(`→ Parsed current amount: ${currentAmount}`);
 
           const adjustAmount = hop.amount || 0;
-          const newTotalAmount = currentAmount + adjustAmount;
-          
+          const newTotalAmount = Math.round((currentAmount + adjustAmount) * 100) / 100;
+
           console.log(`→ Current inventory: ${currentAmount}g`);
           console.log(`→ Adding: +${adjustAmount}g`);
           console.log(`→ New total will be: ${newTotalAmount}g`);
           
-          // Update existing item using inventory_adjust
-          const updateData = {
-            inventory_adjust: adjustAmount
-          };
           
           console.log(`→ Sending data:`, JSON.stringify(updateData));
           
@@ -208,8 +200,7 @@ export class BrewfatherAPI {
           try {
 
             response = await this.client.patch(
-              `/inventory/hops/${existing._id}?inventory_adjust=${adjustAmount}`,
-              updateData
+              `/inventory/hops/${existing._id}?inventory=${newTotalAmount}`
             );
             if (response.data !== "Updated") {
               console.error(`→ Unexpected API response:`, response.status, response.data);
@@ -297,23 +288,12 @@ export class BrewfatherAPI {
           // Read the actual current inventory amount
           const currentAmount = existing.inventory || 0;
           const adjustAmount = yeast.amount || 0;
-          const newTotalAmount = currentAmount + adjustAmount;
-          
+          const newTotalAmount = Math.trunc((currentAmount + adjustAmount) * 100) / 100; // Round to 2 decimal places
+
           console.log(`→ ${yeast.name}: Current ${currentAmount} pkg, Adding +${adjustAmount} pkg`);
           
-          // Update existing item using inventory_adjust
-          const updateData = {
-            inventory_adjust: adjustAmount
-          };
-          
-          // Add cost if provided
-          if (yeast.cost) {
-            updateData.cost = yeast.cost;
-            updateData.costUnit = 'GBP';
-          }
-          
           const response = await this.client.patch(
-            `/inventory/yeasts/${existing._id}`, updateData);
+            `/inventory/yeasts/${existing._id}`);
           
           if (response.data === "Updated") {
             results.push({
@@ -370,23 +350,12 @@ export class BrewfatherAPI {
           // Read the actual current inventory amount
           const currentAmount = existing.inventory || 0;
           const adjustAmount = misc.amount || 0;
-          const newTotalAmount = currentAmount + adjustAmount;
+          const newTotalAmount = Math.trunc((currentAmount + adjustAmount)*100)/100; // Round to 2 decimal places
           
           console.log(`→ ${misc.name}: Current ${currentAmount}g, Adding +${adjustAmount}g`);
           
-          // Update existing item using inventory_adjust
-          const updateData = {
-            inventory_adjust: adjustAmount
-          };
-          
-          // Add cost if provided
-          if (misc.cost) {
-            updateData.cost = misc.cost;
-            updateData.costUnit = 'GBP';
-          }
-          
           const response = await this.client.patch(
-            `/inventory/miscs/${existing._id}`, updateData
+            `/inventory/miscs/${existing._id}?inventory=${newTotalAmount}`
           );
           
           if (response.data === "Updated") {
@@ -425,28 +394,29 @@ export class BrewfatherAPI {
     return results;
   }
 
-          // Helper for paginated inventory fetching
-      async fetchAllInventory(endpoint) {
-        let allItems = [];
-        let lastId = null;
-        let keepGoing = true;
+      // Helper for paginated inventory fetching
+  async fetchAllInventory(endpoint) {
+    let allItems = [];
+    let lastId = null;
+    let keepGoing = true;
 
-        while (keepGoing) {
-          const url = lastId
-        ? `${endpoint}?inventory_exists=true&complete=true&limit=50&start_after=${lastId}`
-        : `${endpoint}?inventory_exists=true&complete=true&limit=50`;
-          const response = await this.client.get(url);
-          const items = response.data || [];
-          allItems = allItems.concat(items);
+    while (keepGoing) {
+      const url = lastId
+      ? `${endpoint}?inventory_exists=true&complete=true&limit=50&start_after=${lastId}`
+      : `${endpoint}?inventory_exists=true&complete=true&limit=50`;
+      
+      const response = await this.client.get(url);
+      const items = response.data || [];
+      allItems = allItems.concat(items);
 
-          if (items.length === 50) {
+      if (items.length === 50) {
         lastId = items[items.length - 1]._id;
-          } else {
+      } else {
         keepGoing = false;
-          }
-        }
-        return allItems;
       }
+    }
+    return allItems;
+  }
 
   // Inventory getter methods
   async getFermentables() {
