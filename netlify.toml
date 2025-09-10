@@ -1,7 +1,7 @@
 [build]
   publish = "webapp/static"
   functions = "netlify/functions"
-  command = "npm install && cd webapp && npm install"
+  command = "npm ci && cd webapp && npm ci"
   base = "."
 
 [dev]
