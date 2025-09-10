@@ -4,7 +4,7 @@ const os = require('os');
 const path = require('path');
 const { InvoiceParser } = require('../../src/parsers/invoice-parser.js');
 
-import { IngredientMapper } from '../../src/mappers/ingredient-mapper.js';
+const { IngredientMapper } = require('../../src/mappers/ingredient-mapper.js');
 const mapper = new IngredientMapper();
 
 function  generateSummary(ingredients) {
