@@ -282,7 +282,7 @@ createApp({
       testingConnection.value = true;
 
       try {
-        const response = await fetch('/api/test-connection', {
+        const response = await fetch('/.netlify/functions/test-connection', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -294,8 +294,7 @@ createApp({
 
         if (data.success) {
           credentialsVerified.value = true;
-          showCredentialsForm.value = false; // Hide the form
-          // Save credentials to localStorage on successful verification
+          showCredentialsForm.value = false;
           saveCredentialsToStorage();
           showSuccess('Brewfather connection successful! Credentials saved.');
         } else {
@@ -315,15 +314,13 @@ createApp({
       analyzing.value = true;
 
       try {
-        // First attempt with stored/current credentials
         let authCredentials = { ...brewfatherCredentials };
         
-        // If no credentials are set, try with empty ones first (in case server has defaults)
         if (!authCredentials.userId && !authCredentials.apiKey) {
           authCredentials = { userId: '', apiKey: '' };
         }
 
-        const response = await fetch('/api/analyze-matches', {
+        const response = await fetch('/.netlify/functions/analyze-matches', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -374,7 +371,7 @@ createApp({
           ingredient => ingredient.matchStatus === 'exact' || ingredient.matchStatus === 'partial'
         );
 
-        const response = await fetch('/api/sync', {
+        const response = await fetch('/.netlify/functions/sync', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
