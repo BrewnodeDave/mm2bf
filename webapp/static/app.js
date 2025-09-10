@@ -259,7 +259,7 @@ createApp({
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to parse invoice');
+          throw new Error(errorData.errorMessage || 'Failed to parse invoice');
         }
 
         const data = await response.json();
@@ -344,7 +344,7 @@ createApp({
             throw new Error('Brewfather authentication required. Please enter your credentials.');
           }
           
-          throw new Error(errorData.error || 'Failed to analyze matches');
+          throw new Error(errorData.errorMessage || 'Failed to analyze matches');
         }
 
         const data = await response.json();
@@ -394,7 +394,7 @@ createApp({
             throw new Error('Brewfather authentication required. Please verify your credentials.');
           }
           
-          throw new Error(errorData.error || 'Failed to sync with Brewfather');
+          throw new Error(errorData.errorMessage || 'Failed to sync with Brewfather');
         }
 
         const data = await response.json();
@@ -441,7 +441,7 @@ createApp({
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to generate reports');
+          throw new Error(errorData.errorMessage || 'Failed to generate reports');
         }
 
         const data = await response.json();
