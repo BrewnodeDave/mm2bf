@@ -1,4 +1,3 @@
-const axios = require('axios');
 const { BrewfatherAPI } = require('../../src/api/brewfather-api.js');
 
 exports.handler = async (event) => {
