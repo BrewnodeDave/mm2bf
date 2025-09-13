@@ -162,19 +162,32 @@ export class BrewfatherAPI {
           const itemName = item.name.toLowerCase();
           const hopName = hop.name.toLowerCase();
           
-          // Try exact match first
-          if (itemName === hopName) return true;
+            // Normalize both type and form for comparison
+            const normalizeType = t => t ? t.toLowerCase().replace('plug', 'pellet').replace('whole', 'leaf') : '';
+            const itemTypeNorm = normalizeType(item.type);
+            const hopFormNorm = normalizeType(hop.form);
+
+            // Consider "leaf" and "whole" as equivalent, "pellet" and "plug" as equivalent
+            const sameType =
+            (itemTypeNorm === hopFormNorm) ||
+            (itemTypeNorm === 'leaf' && hopFormNorm === 'whole') ||
+            (itemTypeNorm === 'whole' && hopFormNorm === 'leaf') ||
+            (itemTypeNorm === 'pellet' && hopFormNorm === 'plug') ||
+            (itemTypeNorm === 'plug' && hopFormNorm === 'pellet');
           
+          // Try exact match first
+          if ((itemName === hopName) && sameType) return true;
+
+
           // Try bidirectional partial matching
-          return itemName.includes(hopName.substring(0, 15)) ||
-                 hopName.includes(itemName.substring(0, 15));
+          return sameType && (itemName.includes(hopName.substring(0, 15)) ||
+                 hopName.includes(itemName.substring(0, 15)));
         });
         
         if (existing) {
           console.log(`→ Found existing hop: ${existing.name}`);
           console.log(`→ Existing inventory data:`, existing.inventory);
-          console.log(`→ Existing full object:`, JSON.stringify(existing, null, 2));
-
+          
           // The existing.inventory contains the current amount as a number
           const currentAmount = existing.inventory || 0;
           console.log(`→ Parsed current amount: ${currentAmount}`);
@@ -185,20 +198,9 @@ export class BrewfatherAPI {
           console.log(`→ Current inventory: ${currentAmount}g`);
           console.log(`→ Adding: +${adjustAmount}g`);
           console.log(`→ New total will be: ${newTotalAmount}g`);
-          
-          
-          console.log(`→ Sending data:`, JSON.stringify(updateData));
-          
-          // Debug: Log the exact request details
-          const fullUrl = `${this.baseURL}/inventory/hops/${existing._id}`;
-          console.log(`→ Full URL:`, fullUrl);
-          console.log(`→ Headers:`, JSON.stringify(this.client.defaults.headers, null, 2));
-          console.log(`→ Method: PATCH`);
-          console.log(`→ Request Body:`, JSON.stringify(updateData, null, 2));
-          
+                              
           let response;
           try {
-
             response = await this.client.patch(
               `/inventory/hops/${existing._id}?inventory=${newTotalAmount}`
             );
@@ -278,10 +280,16 @@ export class BrewfatherAPI {
     for (const yeast of yeasts) {
       try {
         console.log(`Processing yeast: ${yeast.name}`);
-        
+
+        // Try bidirectional partial matching
+        function bidirectionalMatch(itemName, yeastName) {
+          return (itemName.includes(yeastName.substring(0, 15)) ||
+                  yeastName.includes(itemName.substring(0, 15)));
+        }
+
         // Try to find existing item by name
         const existing = existingYeasts.find(item => 
-          item.name && item.name.toLowerCase().includes(yeast.name.toLowerCase().substring(0, 20))
+          item.name && bidirectionalMatch(item.name.toLowerCase(), yeast.name.toLowerCase())
         );
         
         if (existing) {
@@ -293,8 +301,8 @@ export class BrewfatherAPI {
           console.log(`→ ${yeast.name}: Current ${currentAmount} pkg, Adding +${adjustAmount} pkg`);
           
           const response = await this.client.patch(
-            `/inventory/yeasts/${existing._id}`);
-          
+            `/inventory/yeasts/${existing._id}?inventory=${newTotalAmount}`);
+
           if (response.data === "Updated") {
             results.push({
               name: yeast.name,
@@ -852,8 +860,8 @@ export class BrewfatherAPI {
     console.log(`  📝 Keywords: [${searchKeywords.join(', ')}]`);
     
     const matches = existingYeasts.map(yeast => {
-      const yeastNorm = normalizeString(yeast.name);
-      
+      const yeastNorm = normalizeString(`${yeast.productId} ${yeast.laboratory} ${yeast.name}`);
+
       // Brand/manufacturer matching for yeasts
       const yeastBrands = this.extractYeastBrands(searchNorm);
       const inventoryBrands = this.extractYeastBrands(yeastNorm);
