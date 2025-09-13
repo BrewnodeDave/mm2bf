@@ -112,7 +112,7 @@ app.post('/.netlify/functions/test-connection', async (req, res) => {
 });
 
 // Analyze ingredient matches
-app.post('/api/analyze-matches', async (req, res) => {
+app.post('/.netlify/functions/analyze-matches', async (req, res) => {
   try {
     const { ingredients, userId, apiKey } = req.body;
     
@@ -136,7 +136,7 @@ app.post('/api/analyze-matches', async (req, res) => {
 });
 
 // Sync with Brewfather
-app.post('/api/sync', async (req, res) => {
+app.post('/.netlify/functions/sync', async (req, res) => {
   try {
     const { ingredients, userId, apiKey } = req.body;
     
@@ -271,6 +271,12 @@ app.use((error, req, res, next) => {
   }
   
   res.status(500).json({ error: 'Internal server error' });
+});
+
+// 404 handler
+app.use((req, res) => {
+  console.log(`404: ${req.method} ${req.url}`);
+  res.status(404).json({ error: `Route ${req.url} not found` });
 });
 
 // Create uploads directory if it doesn't exist
