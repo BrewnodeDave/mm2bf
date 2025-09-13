@@ -5,21 +5,20 @@
   "main": "src/index.js",
   "type": "module",
   "scripts": {
-    "start": "node src/index.js",
+    "dev": "netlify dev",
+    "build": "cd webapp && npm ci",
+    "start": "cd webapp && npm start",
     "sync": "node src/index.js",
     "extract": "node src/extract-costs.js",
     "match": "node src/match-ingredients.js",
     "test": "node src/test.js",
     "parse-only": "node src/test.js --parse-only",
     "connection-test": "node src/test.js --connection-only",
-    "dry-run": "node src/test.js --dry-run",
-    "webapp": "cd webapp && npm start",
-    "webapp-dev": "cd webapp && npm run dev"
+    "dry-run": "node src/test.js --dry-run"
   },
   "dependencies": {
     "@fastify/busboy": "^3.2.0",
-    "axios": "^1.6.0",
-    "dotenv": "^16.3.1",
+    "axios": "^1.12.1",
     "pdf2json": "^3.2.0"
   },
   "keywords": [

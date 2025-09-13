@@ -1,11 +1,29 @@
 [build]
   publish = "webapp/static"
   functions = "netlify/functions"
-  command = "npm ci && cd webapp && npm ci"
-  base = "."
+  command = """
+    npm ci && \
+    cd webapp && npm ci && \
+    cd ../netlify/functions && npm ci
+  """
+
+[functions]
+  node_bundler = "esbuild"
+  external_node_modules = ["pdf2json", "@fastify/busboy"]
+  included_files = ["src/**/*"]
 
 [dev]
   publish = "webapp/static"
   port = 8888
   autoLaunch = true
   framework = "#static"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
