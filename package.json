@@ -31,5 +31,8 @@
     "beer"
   ],
   "author": "Brewnode Dave",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "dotenv": "^17.2.2"
+  }
 }
