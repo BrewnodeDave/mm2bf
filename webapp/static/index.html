@@ -365,7 +365,7 @@
                         <div class="flex items-center justify-between">
                             <div class="flex-1">
                                 <h4 class="font-medium text-gray-800">{{ ingredient.name }}</h4>
-                                <p class="text-sm text-gray-600">{{ ingredient.type }} • {{ ingredient.amount }} {{ ingredient.unit }} • £{{ ingredient.cost?.toFixed(4) || '0.00' }}/{{ ingredient.unit }}</p>
+                                <p class="text-sm text-gray-600">{{ ingredient.type }} • {{ ingredient.amount }} {{ ingredient.unit }} • £{{ ingredient.cost?.toFixed(2) || '0.00' }}/{{ ingredient.unit }}</p>
                             </div>
                             <div class="ml-4 flex flex-col items-end space-y-1">
                                 <span v-if="ingredient.matchStatus === 'exact'" class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded">
