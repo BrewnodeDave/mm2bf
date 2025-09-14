@@ -1,4 +1,4 @@
-# Malt Miller to Brewfather Sync - Web Application
+# The Malt Miller to Brewfather Sync - Web Application
 
 A modern single-page application (SPA) for extracting ingredients from Malt Miller invoices and syncing them with your Brewfather inventory.
 

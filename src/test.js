@@ -132,7 +132,7 @@ async function runDryRun() {
 }
 
 async function main() {
-  console.log('Malt Miller to Brewfather Sync - Test Script\\n');
+  console.log('The Malt Miller to Brewfather Sync - Test Script\\n');
   
   const args = process.argv.slice(2);
   
