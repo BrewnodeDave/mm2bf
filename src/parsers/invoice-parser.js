@@ -152,7 +152,7 @@ export class InvoiceParser {
     if (!itemText || itemText.length < 3) return null;
     
     // Extract quantity and weight from the end
-    const quantityMatch = itemText.match(/(\d+)\s+([0-9.]+)(kg|g|L|ml|each|pkt|sachets?)\s*$/i);
+    const quantityMatch = itemText.match(/(\d+)\s+([0-9.]+)(kg|g|L|ml|each|pkt|sachets?)(?:\s*£.*)?/i);
     let quantity = 1;
     let unit = 'each';
     
@@ -163,10 +163,14 @@ export class InvoiceParser {
     const lowerText = itemText.toLowerCase();
     const isYeast = yeastKeywords.some(keyword => lowerText.includes(keyword));
     
-    if (isYeast){
-      quantity = parseInt(quantityMatch[1]);
+    if (isYeast) {
+      // For yeast products, always use quantity and 'each' as unit
+      quantity = quantityMatch ? parseInt(quantityMatch[1]) : 1;
       unit = 'each';
-    }else
+      
+      // Clean up the product name by removing the quantity and price info
+      itemText = itemText.replace(/\s+\d+\s+[0-9.]+kg.*$/, '');
+    } else
     if (quantityMatch) {
       quantity = parseInt(quantityMatch[1]);
       const weightValue = parseFloat(quantityMatch[2]);
