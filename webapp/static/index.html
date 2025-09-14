@@ -228,14 +228,6 @@
 
             <div class="flex space-x-4">
                 <button 
-                    @click="generateReports" 
-                    class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-                    :disabled="generatingReports"
-                >
-                    <i class="fas fa-download mr-2"></i>
-                    {{ generatingReports ? 'Generating...' : 'Download Reports' }}
-                </button>
-                <button 
                     @click="currentStep = 3" 
                     class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
                 >
@@ -505,30 +497,6 @@
                         </p>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <!-- Download Reports Modal -->
-        <div v-if="showReportsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center">
-            <div class="bg-white p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
-                <h3 class="text-lg font-semibold text-gray-800 mb-4">Download Reports</h3>
-                <div class="space-y-3">
-                    <button 
-                        v-for="(report, key) in reports" 
-                        :key="key"
-                        @click="downloadReport(report, key)"
-                        class="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-left"
-                    >
-                        <i class="fas fa-download mr-2"></i>
-                        {{ report.filename }}
-                    </button>
-                </div>
-                <button 
-                    @click="showReportsModal = false" 
-                    class="mt-4 w-full bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
-                >
-                    Close
-                </button>
             </div>
         </div>
     </div>
