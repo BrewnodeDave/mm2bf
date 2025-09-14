@@ -167,11 +167,12 @@ createApp({
           brewfatherMatch = match.brewfatherItem;
         }
 
-        return {
+        return reactive({
           ...ingredient,
           matchStatus,
-          brewfatherMatch
-        };
+          brewfatherMatch,
+          selected: true  // Default to selected
+        });
       });
     });
 
@@ -368,8 +369,15 @@ createApp({
 
       try {
         const matchedIngredients = ingredientsWithMatches.value.filter(
-          ingredient => ingredient.matchStatus === 'exact' || ingredient.matchStatus === 'partial'
+          ingredient => (
+            ingredient.selected && // Only sync selected ingredients
+            (ingredient.matchStatus === 'exact' || ingredient.matchStatus === 'partial')
+          )
         );
+
+        if (matchedIngredients.length === 0) {
+          throw new Error('No ingredients selected for syncing');
+        }
 
         const response = await fetch('/.netlify/functions/sync', {
           method: 'POST',
@@ -461,6 +469,39 @@ createApp({
       showSuccess('Credentials cleared from storage');
     };
 
+    // Add these to your setup() function
+    const toggleIngredientSelection = (ingredient) => {
+      ingredient.selected = !ingredient.selected;
+    };
+
+    const toggleAllSelection = (selected) => {
+      ingredientsWithMatches.value.forEach(ingredient => {
+        if (ingredient.matchStatus === 'exact' || ingredient.matchStatus === 'partial') {
+          ingredient.selected = selected;
+        }
+      });
+    };
+
+    const selectedMatchCount = computed(() => {
+      if (!ingredientsWithMatches.value) {
+        return { exact: 0, partial: 0, total: 0 };
+      }
+      
+      const exactMatches = ingredientsWithMatches.value.filter(i => 
+        i.selected && i.matchStatus === 'exact'
+      ).length;
+      
+      const partialMatches = ingredientsWithMatches.value.filter(i =>
+        i.selected && i.matchStatus === 'partial'
+      ).length;
+
+      return {
+          exact: exactMatches,
+          partial: partialMatches,
+          total: exactMatches + partialMatches
+      };
+    });
+
     return {
       // State
       currentStep,
@@ -488,6 +529,7 @@ createApp({
       hasStoredCredentials,
       getSyncSummary,
       enhancedSyncResults,
+      selectedMatchCount, // Expose the selected match count
 
       // Methods
       handleFileSelect,
@@ -500,7 +542,9 @@ createApp({
       clearStoredCredentials,
       getTypeIcon,
       showCredentials, // New
-      hideCredentials  // New
+      hideCredentials,  // New
+      toggleIngredientSelection,
+      toggleAllSelection,
     };
   }
 }).mount('#app');
