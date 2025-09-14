@@ -166,32 +166,35 @@ export class IngredientMapper {
     };
   }
 
+
   mapYeast(item) {
     const name = item.name.toLowerCase();
+    const itemNameIncludes = (needle) => name.includes(needle.toLowerCase());
+
     let form = 'Dry';
     let subType = 'Ale';
     let laboratory = 'Unknown';
-    
-    if (name.includes('liquid')) {
+
+    if (itemNameIncludes('liquid')) {
       form = 'Liquid';
     }
     
-    if (name.includes('lager')) {
+    if (itemNameIncludes('lager')) {
       subType = 'Lager';
-    } else if (name.includes('wheat') || name.includes('weizen')) {
+    } else if (itemNameIncludes('wheat') || itemNameIncludes('weizen')) {
       subType = 'Wheat';
-    } else if (name.includes('wild') || name.includes('brett')) {
+    } else if (itemNameIncludes('wild') || itemNameIncludes('brett')) {
       subType = 'Wild';
     }
     
     // Extract laboratory/brand
-    if (name.includes('wyeast')) {
+    if (itemNameIncludes('wyeast')) {
       laboratory = 'Wyeast';
-    } else if (name.includes('white labs')) {
+    } else if (itemNameIncludes('white labs')) {
       laboratory = 'White Labs';
-    } else if (name.includes('fermentis')) {
+    } else if (itemNameIncludes('fermentis')) {
       laboratory = 'Fermentis';
-    } else if (name.includes('lallemand')) {
+    } else if (itemNameIncludes('lallemand')) {
       laboratory = 'Lallemand';
     }
 

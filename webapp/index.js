@@ -193,40 +193,6 @@ app.post('/.netlify/functions/sync', async (req, res) => {
   }
 });
 
-// Generate downloadable reports
-app.post('/api/generate-reports', async (req, res) => {
-  try {
-    const { invoiceData, ingredients } = req.body;
-    
-    if (!invoiceData || !ingredients) {
-      return res.status(400).json({ error: 'Invoice data and ingredients are required' });
-    }
-
-    const reportFiles = reporter.saveReport(invoiceData, ingredients);
-    
-    // Read the generated files and return as base64
-    const reports = {
-      json: {
-        filename: path.basename(reportFiles.jsonPath),
-        content: fs.readFileSync(reportFiles.jsonPath, 'utf8')
-      },
-      csv: {
-        filename: path.basename(reportFiles.csvPath),
-        content: fs.readFileSync(reportFiles.csvPath, 'utf8')
-      },
-      brewfatherCsv: {
-        filename: path.basename(reportFiles.brewfatherPath),
-        content: fs.readFileSync(reportFiles.brewfatherPath, 'utf8')
-      }
-    };
-    
-    res.json({ reports });
-    
-  } catch (error) {
-    console.error('Error generating reports:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
 
 // Serve the SPA
 app.get('*', (req, res) => {

@@ -1,10 +1,5 @@
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 export class InventoryReporter {
   constructor() {
     this.reports = [];
@@ -122,10 +117,10 @@ export class InventoryReporter {
     return csvContent;
   }
 
-  saveReport(invoiceData, mappedIngredients, outputDir = '.') {
-    const report = this.generateReport(invoiceData, mappedIngredients);
+  saveReport(invoice, mappedIngredients, outputDir = '.') {
+    const report = this.generateReport(invoice, mappedIngredients);
     const timestamp = new Date().toISOString().slice(0, 10);
-    const invoiceNum = invoiceData.invoiceNumber || 'unknown';
+    const invoiceNum = invoice.invoiceNumber || 'unknown';
     
     // Save JSON report
     const jsonFilename = `malt-miller-${invoiceNum}-${timestamp}.json`;
@@ -133,7 +128,7 @@ export class InventoryReporter {
     fs.writeFileSync(jsonPath, JSON.stringify(report, null, 2));
     
     // Save CSV report
-    const csvContent = this.exportToCSV(invoiceData, mappedIngredients);
+    const csvContent = this.exportToCSV(invoice, mappedIngredients);
     const csvFilename = `malt-miller-${invoiceNum}-${timestamp}.csv`;
     const csvPath = path.join(outputDir, csvFilename);
     fs.writeFileSync(csvPath, csvContent);

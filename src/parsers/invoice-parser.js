@@ -156,6 +156,17 @@ export class InvoiceParser {
     let quantity = 1;
     let unit = 'each';
     
+    // Determine if this is a yeast product
+    const yeastKeywords = [
+      'yeast', 'wyeast', 'white labs', 'fermentis', 'lallemand', 'saccharomyces', 'brettanomyces', 'lactobacillus'
+    ];
+    const lowerText = itemText.toLowerCase();
+    const isYeast = yeastKeywords.some(keyword => lowerText.includes(keyword));
+    
+    if (isYeast){
+      quantity = parseInt(quantityMatch[1]);
+      unit = 'each';
+    }else
     if (quantityMatch) {
       quantity = parseInt(quantityMatch[1]);
       const weightValue = parseFloat(quantityMatch[2]);
@@ -163,11 +174,11 @@ export class InvoiceParser {
       
       // If we have both quantity and weight, multiply them for total weight
       if (unit === 'kg') {
-        quantity =  weightValue;
+      quantity =  weightValue;
       }
      
-       if (unit === 'g') {
-        quantity = quantity * weightValue;
+      if (unit === 'g') {
+      quantity = quantity * weightValue;
       }
      
       // Remove the quantity/weight part from the item text
@@ -176,12 +187,12 @@ export class InvoiceParser {
       // Try to find just a quantity at the end
       const qtyMatch = itemText.match(/(\d+)\s+0\.0kg\s*$/i);
       if (qtyMatch) {
-        quantity = parseInt(qtyMatch[1]);
-        unit = 'each';
-        itemText = itemText.replace(qtyMatch[0], '').trim();
+      quantity = parseInt(qtyMatch[1]);
+      unit = 'each';
+      itemText = itemText.replace(qtyMatch[0], '').trim();
       }
     }
-    
+
     // Remove product codes and country codes from the end
     // Patterns like EQU-11-022, 3923299000, CN, AT, GB
     itemText = itemText.replace(/\s+[A-Z]{2,}-\d+-\d+/g, '');

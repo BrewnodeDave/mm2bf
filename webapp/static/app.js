@@ -419,51 +419,24 @@ createApp({
     };
 
     const generateReports = async () => {
-      if (!invoiceData.value?.invoice || !invoiceData.value?.ingredients) {
-        showError('No invoice data available to generate reports');
-        return;
-      }
-
-      clearMessages();
-      generatingReports.value = true;
-
       try {
-        const response = await fetch('/api/generate-reports', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            invoiceData: invoiceData.value.invoice,
-            ingredients: invoiceData.value.ingredients
-          })
-        });
+        const matchedIngredients = ingredientsWithMatches.value.filter(
+          ingredient => ingredient.matchStatus === 'exact' || ingredient.matchStatus === 'partial'
+        );
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.errorMessage || 'Failed to generate reports');
-        }
 
-        const data = await response.json();
-        reports.value = data.reports;
-        showReportsModal.value = true;
-
-      } catch (err) {
-        showError(err.message);
-      } finally {
-        generatingReports.value = false;
+        showSuccess('Reports generated successfully');
+      } catch (error) {
+        showError(error.message);
       }
     };
 
-    const downloadReport = (report, type) => {
-      const blob = new Blob([report.content], {
-        type: type === 'json' ? 'application/json' : 'text/csv'
-      });
-      
+    const downloadFile = (content, filename) => {
+      const blob = new Blob([content], { type: 'text/plain' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = report.filename;
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -522,7 +495,7 @@ createApp({
       analyzeMatches,
       syncWithBrewfather,
       generateReports,
-      downloadReport,
+      downloadFile,
       resetApp,
       clearStoredCredentials,
       getTypeIcon,

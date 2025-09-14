@@ -48,7 +48,7 @@ class MaltMillerInventorySync {
       const results = await this.addToBrewfather(groupedIngredients);
       
       // Generate detailed report
-      const reportFiles = this.reporter.saveReport(invoiceData, mappedIngredients);
+      const reportFiles = this.reporter.saveReport(invoiceData.invoice, mappedIngredients);
       this.reporter.printSummary(reportFiles.report);
       
       console.log('\n📁 Reports saved:');
