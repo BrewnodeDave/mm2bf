@@ -58,10 +58,14 @@ exports.handler = async (event) => {
       try {
         const parser = new InvoiceParser();
         const invoiceData = await parser.parsePDF(filePath);
-        /////
-if (!invoiceData || !invoiceData.items || invoiceData.items.length === 0) {
-      return res.status(400).json({ error: 'No items found in invoice' });
-    }
+
+        if (!invoiceData || !invoiceData.items || invoiceData.items.length === 0) {
+          return resolve({
+            statusCode: 400,
+            body: JSON.stringify({ error: 'No items found in invoice' }),
+            headers: { 'Content-Type': 'application/json' }
+          });
+        }
 
     // Map ingredients
     const mappedIngredients = await mapper.mapIngredients(invoiceData.items);
@@ -82,13 +86,6 @@ if (!invoiceData || !invoiceData.items || invoiceData.items.length === 0) {
           body: JSON.stringify(reportData),
           headers: { 'Content-Type': 'application/json' }
         });
-        //////
-        // fs.unlinkSync(filePath); // Clean up temp file
-        // resolve({
-        //   statusCode: 200,
-        //   body: JSON.stringify(invoiceData),
-        //   headers: { 'Content-Type': 'application/json' }
-        // });
       } catch (err) {
         resolve({
           statusCode: 500,
