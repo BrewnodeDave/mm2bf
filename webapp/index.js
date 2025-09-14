@@ -8,6 +8,7 @@ import { InvoiceParser } from '../src/parsers/invoice-parser.js';
 import { IngredientMapper } from '../src/mappers/ingredient-mapper.js';
 import { BrewfatherAPI } from '../src/api/brewfather-api.js';
 import { InventoryReporter } from '../src/reports/inventory-reporter.js';
+import favicon from 'serve-favicon';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -19,6 +20,9 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'static')));
+
+// Add favicon middleware
+app.use(favicon(path.join(__dirname, 'static', 'favicon.ico')));
 
 // Configure multer for file uploads
 const upload = multer({
