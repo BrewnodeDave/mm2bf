@@ -17,6 +17,10 @@ exports.logApiCall = async function logApiCall(functionName, event, result) {
       result
     };
 
+    console.log("creds", {
+      apiKey: process.env.LOGGING_API_KEY,
+      url: process.env.LOGGING_API_URL
+    });
     // Send to your logging server
     await axios.post(process.env.LOGGING_API_URL, {
       ...logData,
