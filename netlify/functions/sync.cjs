@@ -1,28 +1,37 @@
+const { logApiCall } = require( './utils/logger.cjs');
 const { BrewfatherAPI } = require('../../src/api/brewfather-api.js');
 
 exports.handler = async (event) => {
+  await logApiCall('sync', event);
+
   if (event.httpMethod !== 'POST') {
-    return {
+    const errorResponse = {
       statusCode: 405,
       body: JSON.stringify({ error: 'Method not allowed' })
     };
+    logApiCall('sync', event, errorResponse);
+    return errorResponse;
   }
 
   try {
     const { ingredients, userId, apiKey } = JSON.parse(event.body);
     
     if (!ingredients || !Array.isArray(ingredients)) {
-      return {
+      const errorResponse = {
         statusCode: 400,
         body: JSON.stringify({ error: 'Ingredients array is required' })
       };
+      logApiCall('sync', event, errorResponse);
+      return errorResponse;
     }
     
     if (!userId || !apiKey) {
-      return {
+      const errorResponse = {
         statusCode: 400,
         body: JSON.stringify({ error: 'Brewfather credentials are required' })
       };
+      logApiCall('sync', event, errorResponse);
+      return errorResponse;
     }
 
     const brewfatherAPI = new BrewfatherAPI(userId, apiKey);
@@ -59,19 +68,24 @@ exports.handler = async (event) => {
       } catch (error) {
         console.error(`Error updating ${type} ingredients:`, error);
         results[type] = { error: error.message };
+        logApiCall('sync', event, results);
       }
     }
     
-    return {
+    const result = {
       statusCode: 200,
       body: JSON.stringify({ results })
     };
-    
+    logApiCall('sync', event, result);
+    return result;
+
   } catch (error) {
     console.error('Error syncing with Brewfather:', error);
-    return {
+    const errorResponse = {
       statusCode: 500,
       body: JSON.stringify({ error: error.message })
     };
+    logApiCall('sync', event, errorResponse);
+    return errorResponse;
   }
 }

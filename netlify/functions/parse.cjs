@@ -1,3 +1,4 @@
+const { logApiCall } = require( './utils/logger.cjs');
 const busboy = require('@fastify/busboy');
 const fs = require('fs');
 const os = require('os');
@@ -33,22 +34,28 @@ function  generateSummary(ingredients) {
   return summary;
 }
 
-exports.handler = async (event) => {
+export const handler = async (event) => {
+  let result;
+
   if (event.httpMethod !== 'POST') {
-    return { 
+    const errorResponse = { 
       statusCode: 405, 
       body: JSON.stringify({ error: 'Method Not Allowed' }),
       headers: { 'Content-Type': 'application/json' }
     };
-  }
+    logApiCall('parse', event, errorResponse);
+    return errorResponse;
+  } 
 
   const contentType = event.headers['content-type'] || event.headers['Content-Type'];
   if (!contentType || !contentType.startsWith('multipart/form-data')) {
-    return { 
-      statusCode: 400, 
+    const errorResponse = {
+      statusCode: 400,
       body: JSON.stringify({ error: 'Content-Type must be multipart/form-data' }),
       headers: { 'Content-Type': 'application/json' }
     };
+    logApiCall('parse', event, errorResponse);
+    return errorResponse;
   }
 
   return new Promise((resolve, reject) => {
@@ -58,11 +65,13 @@ exports.handler = async (event) => {
 
     bb.on('file', (fieldname, file, filename) => {
       if (!filename) {
-        return resolve({
+        const errorResponse = {
           statusCode: 400,
           body: JSON.stringify({ error: 'No file provided' }),
           headers: { 'Content-Type': 'application/json' }
-        });
+        }
+        logApiCall('on file', event, errorResponse);
+        return resolve(errorResponse);
       }
 
       filePath = path.join(os.tmpdir(), `invoice-${Date.now()}-${filename}`);
@@ -70,11 +79,13 @@ exports.handler = async (event) => {
 
       file.on('error', (error) => {
         console.error('File upload error:', error);
-        resolve({
+        const errorResponse = {
           statusCode: 500,
           body: JSON.stringify({ error: 'File upload failed' }),
           headers: { 'Content-Type': 'application/json' }
-        });
+        };
+        logApiCall('on error', event, errorResponse);
+        resolve(errorResponse);
       });
 
       file.pipe(fileWriteStream);
@@ -84,12 +95,25 @@ exports.handler = async (event) => {
       try {
         // Verify file exists and has content
         if (!fs.existsSync(filePath)) {
-          throw new Error('No file was uploaded');
+          const errorResponse = {
+            statusCode: 400,
+            body: JSON.stringify({ error: 'No file was uploaded' }),
+            headers: { 'Content-Type': 'application/json' }
+          };
+          logApiCall('pdf-on-finish', event, errorResponse);
+          throw new Error(errorResponse.body);
         }
 
         const fileStats = fs.statSync(filePath);
         if (fileStats.size === 0) {
-          throw new Error('Uploaded file is empty');
+          const errorResponse = {
+            statusCode: 400,
+            body: JSON.stringify({ error: 'Uploaded file is empty' }),
+            headers: { 'Content-Type': 'application/json' }
+          };
+          logApiCall('pdf-on-finish', event, errorResponse);
+          throw new Error(errorResponse.body);
+
         }
 
         console.log('Processing PDF:', filePath);
@@ -98,15 +122,33 @@ exports.handler = async (event) => {
 
         // Detailed validation of parsed data
         if (!invoiceData) {
-          throw new Error('PDF parsing failed - no data returned');
+          const errorResponse = {
+            statusCode: 400,
+            body: JSON.stringify({ error: 'PDF parsing failed - no data returned' }),
+            headers: { 'Content-Type': 'application/json' }
+          };
+          logApiCall('pdf-on-finish', event, errorResponse);
+          throw new Error(errorResponse.body);
         }
 
         if (!Array.isArray(invoiceData.items)) {
-          throw new Error('PDF parsing failed - invalid items structure');
+          const errorResponse = {
+            statusCode: 400,
+            body: JSON.stringify({ error: 'PDF parsing failed - invalid items structure' }),
+            headers: { 'Content-Type': 'application/json' }
+          };
+          logApiCall('pdf-on-finish', event, errorResponse);
+          throw new Error(errorResponse.body);
         }
 
         if (invoiceData.items.length === 0) {
-          throw new Error('No items found in invoice');
+          const errorResponse = {
+            statusCode: 400,
+            body: JSON.stringify({ error: 'No items found in invoice' }),
+            headers: { 'Content-Type': 'application/json' }
+          };
+          logApiCall('pdf-on-finish', event, errorResponse);
+          throw new Error(errorResponse.body);
         }
 
         console.log(`Successfully parsed ${invoiceData.items.length} items`);
@@ -128,11 +170,14 @@ exports.handler = async (event) => {
           if (err) console.error('Error deleting file:', err);
         });
 
-        resolve({
+        const result = {
           statusCode: 200,
           body: JSON.stringify(reportData),
           headers: { 'Content-Type': 'application/json' }
-        });
+        };
+        logApiCall('pdf-on-finish', event, result);
+
+        resolve(result);
 
       } catch (err) {
         console.error('Parse error:', err);
@@ -141,7 +186,7 @@ exports.handler = async (event) => {
           fs.unlink(filePath, () => {});
         }
 
-        resolve({
+        const errorResponse = {
           statusCode: 500,
           body: JSON.stringify({ 
             error: 'Failed to process PDF data',
@@ -149,7 +194,9 @@ exports.handler = async (event) => {
             stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
           }),
           headers: { 'Content-Type': 'application/json' }
-        });
+        };
+        logApiCall('pdf-on-finish', event, errorResponse);
+        resolve(errorResponse);
       }
     });
 
@@ -160,11 +207,13 @@ exports.handler = async (event) => {
       bb.end(buffer);
     } catch (error) {
       console.error('Request body processing error:', error);
-      resolve({
+      const errorResponse = {
         statusCode: 500,
         body: JSON.stringify({ error: 'Failed to process request body' }),
         headers: { 'Content-Type': 'application/json' }
-      });
+      };
+      logApiCall('pdf-on-finish', event, errorResponse);
+      resolve(errorResponse);
     }
   });
 };

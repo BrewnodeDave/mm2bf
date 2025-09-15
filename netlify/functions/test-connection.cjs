@@ -1,26 +1,31 @@
+const { logApiCall } = require( './utils/logger.cjs');
 const axios = require('axios');
 
 exports.handler = async (event) => {
   // Only allow POST requests
   if (event.httpMethod !== 'POST') {
-    return {
+    const result = {
       statusCode: 405,
       body: JSON.stringify({ error: 'Method not allowed' })
     };
+    await logApiCall('test-connection', event, result);
+    return result;
   }
 
-    try {
+  try {
         // Parse the request body
         const { userId, apiKey } = JSON.parse(event.body);
 
         if (!userId || !apiKey) {
-        return {
-            statusCode: 400,
-            body: JSON.stringify({ 
-            success: false, 
-            message: 'Missing credentials' 
-            })
-        };
+            const errorResponse = {
+                statusCode: 400,
+                body: JSON.stringify({ 
+                success: false, 
+                message: 'Missing credentials' 
+                })
+            };
+            logApiCall('test-connection', event, errorResponse);
+            return errorResponse;
         }
 
         const baseURL = 'https://api.brewfather.app/v2';
@@ -46,21 +51,25 @@ exports.handler = async (event) => {
 
         // Handle different error cases
         if (error.response?.status === 401) {
-            return {
+            const errorResponse =  {
                 statusCode: 401,
                 body: JSON.stringify({ 
                 success: false, 
                 message: 'Invalid credentials' 
                 })
             };
+            logApiCall('test-connection', event, errorResponse);
+            return errorResponse;
         }
 
-        return {
+        const errorResponse = {
             statusCode: 500,
             body: JSON.stringify({ 
                 success: false, 
                 message: 'Failed to connect to Brewfather' 
             })
         };
+        logApiCall('test-connection', event, errorResponse);
+        return errorResponse;
     }
 };

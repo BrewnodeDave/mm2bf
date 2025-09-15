@@ -1,21 +1,26 @@
 import { InventoryReporter } from '../../src/reports/inventory-reporter.js';
+import { logApiCall } from './utils/logger.cjs';
 
 export const handler = async (event) => {
   if (event.httpMethod !== 'POST') {
-    return {
+    const errorResponse = {
       statusCode: 405,
       body: JSON.stringify({ error: 'Method not allowed' })
     };
+    logApiCall('generate-reports', event, errorResponse);
+    return errorResponse;
   }
 
   try {
     const { invoiceData, ingredients } = JSON.parse(event.body);
     
     if (!invoiceData || !ingredients) {
-      return {
+      const errorResponse = {
         statusCode: 400,
         body: JSON.stringify({ error: 'Invoice data and ingredients are required' })
       };
+      logApiCall('generate-reports', event, errorResponse);
+      return errorResponse;
     }
 
     const reporter = new InventoryReporter();
@@ -43,9 +48,11 @@ export const handler = async (event) => {
 
   } catch (error) {
     console.error('Error generating reports:', error);
-    return {
+
+    const errorResponse = {
       statusCode: 500,
       body: JSON.stringify({ error: error.message })
     };
+    return errorResponse;
   }
 };
