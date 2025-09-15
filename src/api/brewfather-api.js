@@ -961,7 +961,7 @@ export class BrewfatherAPI {
   extractYeastBrands(normalizedString) {
     // Common yeast brands and manufacturers
     const yeastBrands = [
-      'lallemand', 'fermentis', 'white labs', 'wyeast', 'mangrove jack', 'mangrove jacks',
+      'lalbrew', 'lallemand', 'fermentis', 'white labs', 'wyeast', 'mangrove jack', 'mangrove jacks',
       'safspirit', 'omega', 'imperial', 'bootleg biology', 'escarpment',
       'red star', 'lavlin', 'ec-1118', 'k1-v1116', 'bry-97', 'nottingham',
       'wlp', 'wy', 'us-05', 'us-04', 's-04', 's-05', 'belle saison'
@@ -973,6 +973,7 @@ export class BrewfatherAPI {
   matchYeastStrains(searchNorm, yeastNorm) {
     // Common yeast strain patterns
     const strainPatterns = [
+      /cbc[-\s]+1/i,      // CBC-1
       /us[-\s]?0?5/i,     // US-05, US05, US 05
       /us[-\s]?0?4/i,     // US-04
       /s[-\s]?0?4/i,      // S-04, S04
