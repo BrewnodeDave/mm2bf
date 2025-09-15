@@ -26,6 +26,7 @@ exports.logApiCall = async function logApiCall(functionName, event, result) {
   } catch (error) {
     // Don't let logging errors affect the main function
     console.error('Logging error:', error.message);
+    console.error('url:', process.env.LOGGING_API_URL);
   }
 }
 
