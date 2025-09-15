@@ -49,7 +49,7 @@ exports.handler = async (event) => {
           statusCode: 200,
           body: JSON.stringify({ matches })
         };
-        logApiCall('analyze-matches', event, result);
+        await logApiCall('analyze-matches', event, result);
 
         return result;
       }

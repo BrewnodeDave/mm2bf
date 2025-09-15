@@ -43,7 +43,7 @@ export const handler = async (event) => {
       body: JSON.stringify({ error: 'Method Not Allowed' }),
       headers: { 'Content-Type': 'application/json' }
     };
-    logApiCall('parse', event, errorResponse);
+    await logApiCall('parse', event, errorResponse);
     return errorResponse;
   } 
 
@@ -54,7 +54,7 @@ export const handler = async (event) => {
       body: JSON.stringify({ error: 'Content-Type must be multipart/form-data' }),
       headers: { 'Content-Type': 'application/json' }
     };
-    logApiCall('parse', event, errorResponse);
+    await logApiCall('parse', event, errorResponse);
     return errorResponse;
   }
 
@@ -63,28 +63,28 @@ export const handler = async (event) => {
     let filePath = '';
     let fileWriteStream;
 
-    bb.on('file', (fieldname, file, filename) => {
+    bb.on('file', async (fieldname, file, filename) => {
       if (!filename) {
         const errorResponse = {
           statusCode: 400,
           body: JSON.stringify({ error: 'No file provided' }),
           headers: { 'Content-Type': 'application/json' }
-        }
-        logApiCall('on file', event, errorResponse);
+        };
+        await logApiCall('on file', event, errorResponse);
         return resolve(errorResponse);
       }
 
       filePath = path.join(os.tmpdir(), `invoice-${Date.now()}-${filename}`);
       fileWriteStream = fs.createWriteStream(filePath);
 
-      file.on('error', (error) => {
+      file.on('error', async (error) => {
         console.error('File upload error:', error);
         const errorResponse = {
           statusCode: 500,
           body: JSON.stringify({ error: 'File upload failed' }),
           headers: { 'Content-Type': 'application/json' }
         };
-        logApiCall('on error', event, errorResponse);
+        await logApiCall('on error', event, errorResponse);
         resolve(errorResponse);
       });
 
@@ -100,7 +100,7 @@ export const handler = async (event) => {
             body: JSON.stringify({ error: 'No file was uploaded' }),
             headers: { 'Content-Type': 'application/json' }
           };
-          logApiCall('pdf-on-finish', event, errorResponse);
+          await logApiCall('pdf-on-finish', event, errorResponse);
           throw new Error(errorResponse.body);
         }
 
@@ -111,7 +111,7 @@ export const handler = async (event) => {
             body: JSON.stringify({ error: 'Uploaded file is empty' }),
             headers: { 'Content-Type': 'application/json' }
           };
-          logApiCall('pdf-on-finish', event, errorResponse);
+          await logApiCall('pdf-on-finish', event, errorResponse);
           throw new Error(errorResponse.body);
 
         }
@@ -127,7 +127,7 @@ export const handler = async (event) => {
             body: JSON.stringify({ error: 'PDF parsing failed - no data returned' }),
             headers: { 'Content-Type': 'application/json' }
           };
-          logApiCall('pdf-on-finish', event, errorResponse);
+          await logApiCall('pdf-on-finish', event, errorResponse);
           throw new Error(errorResponse.body);
         }
 
@@ -137,7 +137,7 @@ export const handler = async (event) => {
             body: JSON.stringify({ error: 'PDF parsing failed - invalid items structure' }),
             headers: { 'Content-Type': 'application/json' }
           };
-          logApiCall('pdf-on-finish', event, errorResponse);
+          await logApiCall('pdf-on-finish', event, errorResponse);
           throw new Error(errorResponse.body);
         }
 
@@ -147,7 +147,7 @@ export const handler = async (event) => {
             body: JSON.stringify({ error: 'No items found in invoice' }),
             headers: { 'Content-Type': 'application/json' }
           };
-          logApiCall('pdf-on-finish', event, errorResponse);
+          await logApiCall('pdf-on-finish', event, errorResponse);
           throw new Error(errorResponse.body);
         }
 
@@ -175,7 +175,7 @@ export const handler = async (event) => {
           body: JSON.stringify(reportData),
           headers: { 'Content-Type': 'application/json' }
         };
-        logApiCall('pdf-on-finish', event, result);
+        await logApiCall('pdf-on-finish', event, result);
 
         resolve(result);
 
@@ -195,25 +195,30 @@ export const handler = async (event) => {
           }),
           headers: { 'Content-Type': 'application/json' }
         };
-        logApiCall('pdf-on-finish', event, errorResponse);
+        await logApiCall('pdf-on-finish', event, errorResponse);
         resolve(errorResponse);
       }
     });
 
-    try {
+    async function foo(){try {
       const buffer = event.isBase64Encoded 
         ? Buffer.from(event.body, 'base64')
         : Buffer.from(event.body);
       bb.end(buffer);
     } catch (error) {
+      
       console.error('Request body processing error:', error);
       const errorResponse = {
         statusCode: 500,
         body: JSON.stringify({ error: 'Failed to process request body' }),
         headers: { 'Content-Type': 'application/json' }
       };
-      logApiCall('pdf-on-finish', event, errorResponse);
+      await logApiCall('pdf-on-finish', event, errorResponse);
       resolve(errorResponse);
     }
+  }
+
+  foo();
+
   });
 };

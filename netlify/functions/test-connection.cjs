@@ -24,7 +24,7 @@ exports.handler = async (event) => {
                 message: 'Missing credentials' 
                 })
             };
-            logApiCall('test-connection', event, errorResponse);
+            await logApiCall('test-connection', event, errorResponse);
             return errorResponse;
         }
 
@@ -58,7 +58,7 @@ exports.handler = async (event) => {
                 message: 'Invalid credentials' 
                 })
             };
-            logApiCall('test-connection', event, errorResponse);
+            await logApiCall('test-connection', event, errorResponse);
             return errorResponse;
         }
 
@@ -69,7 +69,7 @@ exports.handler = async (event) => {
                 message: 'Failed to connect to Brewfather' 
             })
         };
-        logApiCall('test-connection', event, errorResponse);
+        await logApiCall('test-connection', event, errorResponse);
         return errorResponse;
     }
 };

@@ -7,7 +7,7 @@ export const handler = async (event) => {
       statusCode: 405,
       body: JSON.stringify({ error: 'Method not allowed' })
     };
-    logApiCall('generate-reports', event, errorResponse);
+    await logApiCall('generate-reports', event, errorResponse);
     return errorResponse;
   }
 
@@ -19,7 +19,7 @@ export const handler = async (event) => {
         statusCode: 400,
         body: JSON.stringify({ error: 'Invoice data and ingredients are required' })
       };
-      logApiCall('generate-reports', event, errorResponse);
+      await logApiCall('generate-reports', event, errorResponse);
       return errorResponse;
     }
 

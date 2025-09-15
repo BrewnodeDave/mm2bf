@@ -9,7 +9,7 @@ exports.handler = async (event) => {
       statusCode: 405,
       body: JSON.stringify({ error: 'Method not allowed' })
     };
-    logApiCall('sync', event, errorResponse);
+    await logApiCall('sync', event, errorResponse);
     return errorResponse;
   }
 
@@ -21,7 +21,7 @@ exports.handler = async (event) => {
         statusCode: 400,
         body: JSON.stringify({ error: 'Ingredients array is required' })
       };
-      logApiCall('sync', event, errorResponse);
+      await logApiCall('sync', event, errorResponse);
       return errorResponse;
     }
     
@@ -30,7 +30,7 @@ exports.handler = async (event) => {
         statusCode: 400,
         body: JSON.stringify({ error: 'Brewfather credentials are required' })
       };
-      logApiCall('sync', event, errorResponse);
+      await logApiCall('sync', event, errorResponse);
       return errorResponse;
     }
 
@@ -68,7 +68,7 @@ exports.handler = async (event) => {
       } catch (error) {
         console.error(`Error updating ${type} ingredients:`, error);
         results[type] = { error: error.message };
-        logApiCall('sync', event, results);
+        await logApiCall('sync', event, results);
       }
     }
     
@@ -76,7 +76,7 @@ exports.handler = async (event) => {
       statusCode: 200,
       body: JSON.stringify({ results })
     };
-    logApiCall('sync', event, result);
+    await logApiCall('sync', event, result);
     return result;
 
   } catch (error) {
@@ -85,7 +85,7 @@ exports.handler = async (event) => {
       statusCode: 500,
       body: JSON.stringify({ error: error.message })
     };
-    logApiCall('sync', event, errorResponse);
+    await logApiCall('sync', event, errorResponse);
     return errorResponse;
   }
 }
